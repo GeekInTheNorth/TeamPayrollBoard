@@ -1,0 +1,100 @@
+﻿body {
+    background-color: black;
+}
+
+div.payroll-board-top {
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+div.payroll-board {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+div.page-title, div.payroll-board-type, div.days-until {
+    background-color: #567714;
+    border-color: #d4ee9f;
+    color: #d4ee9f;
+}
+
+div.youtrack-item, div.payroll-board-state {
+    background-color: #d4ee9f;
+    border-color: #567714;
+    color: #567714;
+}
+
+div.payroll-board-type, div.payroll-board-state {
+    width: 9.4%;
+    min-width: 150px;
+    height: 100px;
+    float: left;
+}
+
+div.days-until {
+    width: 20%;
+    height: 100px;
+    float: left;
+    min-width: 200px;
+}
+
+div.page-title {
+    font-size:4em;
+    height: 100px;
+    float: left;
+    width:58%;
+    min-width: 500px;
+}
+
+div.page-title, div.days-until, div.payroll-board-type, div.payroll-board-state {
+    margin: 2px 2px 2px 2px;
+    padding: 2px 2px 2px 2px;
+    text-align: center;
+    font-family: Tahoma;
+    border-style: solid;
+    border-width: 1px;
+}
+
+div.youtrack-item {
+    margin: 2px 2px 2px 2px;
+    width: 99%;
+    float: left;
+}
+
+div.youtrack-id {
+    padding: 5px;
+    float: left;
+}
+
+div.youtrack-body {
+    font-size: 2em;
+    float: left;
+    width: auto;
+    padding-left: 20px;
+}
+
+div.youtrack-id, span.large-text {
+    font-size: 4em;
+}
+
+div.clear {
+    clear: both;
+}
+
+.shade1 {
+    color: #D4EE9F;
+}
+.shade2 {
+    color: #A5C663;
+}
+.shade3 {
+    color: #7B9F35;
+}
+.shade4 {
+    color: #567714;
+}
+.shade5 {
+    color: #354F00;
+}
