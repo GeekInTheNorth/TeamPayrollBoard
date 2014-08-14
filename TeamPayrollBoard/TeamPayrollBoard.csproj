@@ -57,9 +57,9 @@
     <Reference Include="System.EnterpriseServices" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="MockUp.css" />
-    <Content Include="MockUp.html" />
-    <Content Include="MockUp.js" />
+    <Content Include="PayrollBoard.css" />
+    <Content Include="PayrollBoard.html" />
+    <Content Include="PayrollBoard.js" />
     <Content Include="packages.config" />
     <None Include="Scripts\jquery-2.1.1.intellisense.js" />
     <Content Include="Scripts\jquery-2.1.1.js" />

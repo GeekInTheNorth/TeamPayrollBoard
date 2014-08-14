@@ -15,15 +15,15 @@ div.payroll-board {
 }
 
 div.page-title, div.payroll-board-type, div.days-until {
-    background-color: #567714;
-    border-color: #d4ee9f;
-    color: #d4ee9f;
+    background-color: #3434B2;
+    border-color: #C4C4E8;
+    color: #C4C4E8;
 }
 
 div.youtrack-item, div.payroll-board-state {
-    background-color: #d4ee9f;
-    border-color: #567714;
-    color: #567714;
+    background-color: #C4C4E8;
+    border-color: #3434B2;
+    color: #3434B2;
 }
 
 div.payroll-board-type, div.payroll-board-state {
@@ -84,17 +84,17 @@ div.clear {
 }
 
 .shade1 {
-    color: #D4EE9F;
+    color: #C4C4E8;
 }
 .shade2 {
-    color: #A5C663;
+    color: #8181CF;
 }
 .shade3 {
-    color: #7B9F35;
+    color: #5555BB;
 }
 .shade4 {
-    color: #567714;
+    color: #3434B2;
 }
 .shade5 {
-    color: #354F00;
+    color: #15159E;
 }
