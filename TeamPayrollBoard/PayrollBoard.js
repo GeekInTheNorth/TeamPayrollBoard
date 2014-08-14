@@ -1,12 +1,19 @@
 ﻿$(document).ready(function () {
-    $("#DevelopBoardCounts").empty();
-    $("#RegressionBoardCounts").empty();
-    $("#YouTrackItemList").empty();
-
-    CountYouTrackItemsOnBoard("Development", "http://youtrack:9111/rest/issue/byproject/PY?filter=Payroll+Board%3A+Development+State%3A+%7BDesigning+-+Done%7D+..+%7BProduct+Owner+Review%7D+order+by%3A+updated+desc&max=100");
-    CountYouTrackItemsOnBoard("Regression", "http://youtrack:9111/rest/issue/byproject/PY?filter=Payroll+Board%3A+Regression+State%3A+%7BDesigning+-+Done%7D+..+%7BProduct+Owner+Review%7D+order+by%3A+updated+desc&max=100");
-    GetLatestUpdatedItems("http://youtrack:9111/rest/issue/byproject/PY?filter=Payroll+Board%3A+Development%2C+Regression+State%3A+%7BDesigning+-+Done%7D+..+%7BProduct+Owner+Review%7D+order+by%3A+updated+desc&max=6");
+    UpdateYouTrackData();
 });
+
+function UpdateYouTrackData() {
+    $("#DevelopBoardCounts").empty();
+    CountYouTrackItemsOnBoard("Development", "http://youtrack:9111/rest/issue/byproject/PY?filter=Payroll+Board%3A+Development+State%3A+%7BDesigning+-+Done%7D+..+%7BProduct+Owner+Review%7D+order+by%3A+updated+desc&max=100");
+
+    $("#RegressionBoardCounts").empty();
+    CountYouTrackItemsOnBoard("Regression", "http://youtrack:9111/rest/issue/byproject/PY?filter=Payroll+Board%3A+Regression+State%3A+%7BDesigning+-+Done%7D+..+%7BProduct+Owner+Review%7D+order+by%3A+updated+desc&max=100");
+
+    $("#YouTrackItemList").empty();
+    GetLatestUpdatedItems("http://youtrack:9111/rest/issue/byproject/PY?filter=Payroll+Board%3A+Development%2C+Regression+State%3A+%7BDesigning+-+Done%7D+..+%7BProduct+Owner+Review%7D+order+by%3A+updated+desc&max=5");
+    
+    window.setTimeout(function() { UpdateYouTrackData(); }, 300000);
+}
 
 function GetLatestUpdatedItems(youTrackUrl) {
     $.ajax({
@@ -29,6 +36,7 @@ function DisplayLatestUpdatedItems(jsonData) {
         var youTrackTitle = "";
         var youTrackUser = "";
         var youTrackType = "";
+        var youTrackState = "";
         var updated = "";
         var boardType = "";
 
@@ -50,6 +58,8 @@ function DisplayLatestUpdatedItems(jsonData) {
                         youTrackUser = field["value"];
                     else if (field["name"] == "Type")
                         youTrackType = field["value"].toString();
+                    else if (field["name"] == "State")
+                        youTrackState = field["value"].toString();
                     else {
                         console.log(field["name"].toString() + " = " + field["value"].toString());
                     }
@@ -57,7 +67,7 @@ function DisplayLatestUpdatedItems(jsonData) {
             }
         }
         
-        DisplayYouTrackItem(boardType, youTrackId, youTrackTitle, youTrackUser, youTrackType, updated);
+        DisplayYouTrackItem(boardType, youTrackId, youTrackTitle, youTrackUser, youTrackType, updated, youTrackState);
     }
 }
 
@@ -142,10 +152,13 @@ function CountIssues(boardType, jsonData) {
 
 function DisplayCounts(boardType, countDesigningDone, countInProgress, countInProgressDone, countFunctionalTesting, countFunctionalTestingDone, countMergedToDevelop, countIntegrationTesting, countProductOwnerReview, countTotal) {
     var boardCounts = $("#DevelopBoardCounts");
-    if (boardType == "Regression")
+    var boardShortText = "DEV.";
+    if (boardType == "Regression") {
         boardCounts = $("#RegressionBoardCounts");
-
-    boardCounts.append('<div class="payroll-board-type">' + boardType + '</div>');
+        boardShortText = "REG.";
+    }
+    
+    boardCounts.append('<div class="payroll-board-type"><span class="large-text">' + boardShortText + '</span></div>');
     boardCounts.append('<div class="payroll-board-state"><span>Designing - Done</span><br/><span class="large-text">' + countDesigningDone + '</span></div>');
     boardCounts.append('<div class="payroll-board-state"><span>In Progress</span><br/><span class="large-text">' + countInProgress + '</span></div>');
     boardCounts.append('<div class="payroll-board-state"><span>In Progress - Done</span><br/><span class="large-text">' + countInProgressDone + '</span></div>');
@@ -157,8 +170,17 @@ function DisplayCounts(boardType, countDesigningDone, countInProgress, countInPr
     boardCounts.append('<div class="payroll-board-state"><span>Total</span><br/><span class="large-text">' + countTotal + '</span></div>');
 }
 
-function DisplayYouTrackItem(boardType, youTrackId, youTrackTitle, youTrackUser, youTrackType, updated) {
-    $("#YouTrackItemList").append('<div class="clear"></div><div class="youtrack-item"><div class="youtrack-id">' + youTrackId + '</div><div class="youtrack-body"><span>' + youTrackType + ' : ' + youTrackTitle + '</span><br/><span>Updated by ' + youTrackUser + ' at ' + updated + '</span></div></div>');
+function DisplayYouTrackItem(boardType, youTrackId, youTrackTitle, youTrackUser, youTrackType, updated, youTrackState) {
+    var markUp = '<div class="clear"></div>'
+               + '<div class="youtrack-item">'
+               + '<div class="youtrack-id">' + youTrackId + '</div>'
+               + '<div class="youtrack-body">'
+               + '<span>' + youTrackType + ' : ' + youTrackTitle + '</span><br/>'
+               + '<span>State : ' + youTrackState + '</span><br/>'
+               + '<span>Updated : ' + youTrackUser + ' at ' + updated + '</span>'
+               + '</div>'
+               + '</div>';
+    $("#YouTrackItemList").append(markUp);
 }
 
 function ConvertYouTrackDate(milliseconds) {
