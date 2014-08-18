@@ -186,7 +186,10 @@ function DisplayYouTrackItem(boardType, youTrackId, youTrackTitle, youTrackUser,
 function ConvertYouTrackDate(milliseconds) {
     var thisDate = new Date(0);
     thisDate.setMilliseconds(milliseconds);
-
+    
+    // using getUTCHours gives us an hour earlier rather than later. I believe this is data related. So having to manually add an hour for the moment
+    thisDate.setTime(thisDate.getTime() + (60 * 60 * 1000));
+    
     var displayString = "";
 
     if (thisDate.getDate() < 10)
