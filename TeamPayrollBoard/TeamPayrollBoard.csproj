@@ -62,6 +62,7 @@
     <Content Include="PayrollBoard.js" />
     <Content Include="packages.config" />
     <Content Include="Data\Web.config" />
+    <Content Include="Data\Configuration.json" />
     <None Include="Scripts\jquery-2.1.1.intellisense.js" />
     <Content Include="Scripts\jquery-2.1.1.js" />
     <Content Include="Scripts\jquery-2.1.1.min.js" />
@@ -74,8 +75,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Scripts\jquery-2.1.1.min.map" />
-    <Content Include="Data\BoardStates.json" />
-    <Content Include="Data\BoardQueries.json" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
