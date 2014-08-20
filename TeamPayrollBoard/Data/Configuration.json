@@ -1,0 +1,47 @@
+{
+  "LatestItemsUrl": "http://youtrack:9111/rest/issue/byproject/PY?filter=Payroll+Board%3A+Development%2C+Regression+State%3A+%7BDesigning+-+Done%7D+..+%7BProduct+Owner+Review%7D+order+by%3A+updated+desc&max=5",
+  "CountUrls": [
+    {
+      "Name": "Dev.",
+      "Url": "http://youtrack:9111/rest/issue/byproject/PY?filter=Payroll+Board%3A+Development+State%3A+%7BDesigning+-+Done%7D+..+%7BProduct+Owner+Review%7D+order+by%3A+updated+desc&max=100"
+    },
+    {
+      "Name": "Reg.",
+      "Url": "http://youtrack:9111/rest/issue/byproject/PY?filter=Payroll+Board%3A+Regression+State%3A+%7BDesigning+-+Done%7D+..+%7BProduct+Owner+Review%7D+order+by%3A+updated+desc&max=100"
+    }
+  ],
+  "States": [
+    {
+      "DisplayName": "Designing - Done",
+      "Name": "Designing - Done"
+    },
+    {
+      "DisplayName": "In Progress",
+      "Name": "In Progress"
+    },
+    {
+      "DisplayName": "In Progress - Done",
+      "Name": "In Progress - Done"
+    },
+    {
+      "DisplayName": "Func. Testing",
+      "Name": "Functional Testing"
+    },
+    {
+      "DisplayName": "Func. Testing - Done",
+      "Name": "Functional Testing - Done"
+    },
+    {
+      "DisplayName": "Merge",
+      "Name": "Merged to develop"
+    },
+    {
+      "DisplayName": "Integration Testing",
+      "Name": "Integration Testing"
+    },
+    {
+      "DisplayName": "P/O Review",
+      "Name": "Product Owner Review"
+    }
+  ]
+}
