@@ -5,21 +5,19 @@ An Information Radiator for my development team "Team Payroll".  We use Youtrack
 
 While Youtrack is great for getting an overall feel for where we are, I wanted an information radiator (screen) that would tell me a few key pieces of information that were really easy to read:
 
-1.Which patches have made progress recently
-2.How many patches are in each state
-3.How many we have remaining to sign off
-4.How many working days we have left
+<ul>
+<li>Which patches have made progress recently</li>
+<li>How many patches are in each state</li>
+<li>How many we have remaining to sign off</li>
+<li>How many working days we have left</li>
+</ul>
 
 TODO
 ====
-
-Implement the Days until Cut-off counters
-Template the Configuration.json
-Implement a How to Use
-Retitle to something less tied to my Dev. Team.
-Allow the Refresh time to be configured
-
-DONE
-====
-Moved URLs to obtain data from Youtrack out of the javascript to the Configuration.json
-Moved State information from the javascript to the Configuration.json
+<ul>
+<li>Implement the Days until Cut-off counters</li>
+<li>Template the Configuration.json</li>
+<li>Implement a How to Use</li>
+<li>Retitle to something less tied to my Dev. Team.</li>
+<li>Allow the Refresh time to be configured</li>
+</ul>
