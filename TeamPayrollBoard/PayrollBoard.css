@@ -20,7 +20,7 @@ div.page-title, div.payroll-board-type, div.days-until {
     color: #C4C4E8;
 }
 
-div.youtrack-item, div.payroll-board-state {
+div.payroll-board-state {
     background-color: #C4C4E8;
     border-color: #3434B2;
     color: #3434B2;
@@ -57,30 +57,53 @@ div.page-title, div.days-until, div.payroll-board-type, div.payroll-board-state 
     border-width: 1px;
 }
 
-div.youtrack-item {
-    margin: 2px 2px 2px 2px;
-    width: 99%;
-    float: left;
+div.clear {
+    clear: both;
 }
 
-div.youtrack-id {
-    padding: 5px;
-    float: left;
-}
-
-div.youtrack-body {
-    font-size: 2em;
-    float: left;
-    width: auto;
-    padding-left: 20px;
-}
-
-div.youtrack-id, span.large-text {
+td.youtrack-id, span.large-text {
     font-size: 4em;
 }
 
-div.clear {
-    clear: both;
+div.issue-list {
+    width: 100%;
+}
+
+table.issue-list {
+    width: 100%;
+    border: solid 1px #3434B2;
+    border-collapse: collapse;
+}
+
+tr.youtrack-first-row {
+    border-top: solid 2px #3434B2;
+}
+
+tr.youtrack-last-row {
+    border-bottom: solid 2px #3434B2;
+}
+
+tr.youtrack-first-row, tr.youtrack-middle-row, tr.youtrack-last-row {
+    border-left: solid 2px #3434B2;
+    border-right: solid 2px #3434B2;
+}
+
+td.youtrack-id {
+    text-align: center;
+    vertical-align: middle;
+}
+
+td.youtrack-body {
+    font-size: 2em;
+    padding-left: 20px;
+    padding-top: 1px;
+    padding-bottom: 1px;
+}
+
+td.youtrack-id, td.youtrack-body {
+    background-color: #C4C4E8;
+    border-color: #3434B2;
+    color: #3434B2;
 }
 
 .shade1 {

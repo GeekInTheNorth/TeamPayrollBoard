@@ -80,6 +80,10 @@ function GetLatestUpdatedItems(youTrackUrl) {
 }
 
 function DisplayLatestUpdatedItems(jsonData) {
+    $("#YouTrackItemList").empty();
+    
+    var markUp = '<table class="issue-list">';
+    
     for (var key in jsonData) {
         var youTrackId = "";
         var youTrackTitle = "";
@@ -116,8 +120,11 @@ function DisplayLatestUpdatedItems(jsonData) {
             }
         }
         
-        DisplayYouTrackItem(boardType, youTrackId, youTrackTitle, youTrackUser, youTrackType, updated, youTrackState);
+        markUp = markUp + DisplayYouTrackItem(boardType, youTrackId, youTrackTitle, youTrackUser, youTrackType, updated, youTrackState);
     }
+
+    markUp = markUp + '</table>';
+    $("#YouTrackItemList").append(markUp);
 }
 
 function CountYouTrackItemsOnBoard(boardName, youTrackUrl, states) {
@@ -189,16 +196,13 @@ function DisplayCounts(boardName, counts, states) {
 }
 
 function DisplayYouTrackItem(boardType, youTrackId, youTrackTitle, youTrackUser, youTrackType, updated, youTrackState) {
-    var markUp = '<div class="clear"></div>'
-               + '<div class="youtrack-item">'
-               + '<div class="youtrack-id">' + youTrackId + '</div>'
-               + '<div class="youtrack-body">'
-               + '<span>' + youTrackType + ' : ' + youTrackTitle + '</span><br/>'
-               + '<span>State : ' + youTrackState + '</span><br/>'
-               + '<span>Updated : ' + youTrackUser + ' at ' + updated + '</span>'
-               + '</div>'
-               + '</div>';
-    $("#YouTrackItemList").append(markUp);
+    var formattedId = youTrackId.replace("-", "&#8209;");
+
+    var markUp = '<tr class="youtrack-first-row"><td rowspan="3" class="youtrack-id">' + formattedId + '</td><td class="youtrack-body">' + youTrackType + ' : ' + youTrackTitle + '</td></tr>'
+               + '<tr class="youtrack-middle-row"><td class="youtrack-body">State : ' + youTrackState + '</td></tr>'
+               + '<tr class="youtrack-last-row"><td class="youtrack-body">Updated : ' + youTrackUser + ' at ' + updated + '</td></tr>';
+    
+    return markUp;
 }
 
 function ConvertYouTrackDate(milliseconds) {

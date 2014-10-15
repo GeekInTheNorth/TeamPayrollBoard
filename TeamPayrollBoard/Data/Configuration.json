@@ -1,13 +1,13 @@
 {
-  "LatestItemsUrl": "http://youtrack:9111/rest/issue/byproject/PY?filter=Payroll+Board%3A+Development%2C+Regression+State%3A+%7BDesigning+-+Done%7D+..+%7BProduct+Owner+Review%7D+order+by%3A+updated+desc&max=5",
+  "LatestItemsUrl": "http://youtrack:9111/rest/issue/byproject/PY?filter=project%3A+Payroll+State%3A+%7BDesigning+-+Done%7D+..+%7BProduct+Owner+Review%7D+order+by%3A+updated+desc&max=5",
   "CountUrls": [
     {
       "Name": "Dev.",
-      "Url": "http://youtrack:9111/rest/issue/byproject/PY?filter=Payroll+Board%3A+Development+State%3A+%7BDesigning+-+Done%7D+..+%7BProduct+Owner+Review%7D+order+by%3A+updated+desc&max=100"
+      "Url": "http://youtrack:9111/rest/issue/byproject/PY?filter=project%3A+Payroll+Payroll+Board%3A+5.3+State%3A+%7BDesigning+-+Done%7D+..+%7BProduct+Owner+Review%7D+Regression%3A+No+order+by%3A+updated+desc&max=100"
     },
     {
       "Name": "Reg.",
-      "Url": "http://youtrack:9111/rest/issue/byproject/PY?filter=Payroll+Board%3A+Regression+State%3A+%7BDesigning+-+Done%7D+..+%7BProduct+Owner+Review%7D+order+by%3A+updated+desc&max=100"
+      "Url": "http://youtrack:9111/rest/issue/byproject/PY?filter=project%3A+Payroll+Payroll+Board%3A+5.3+State%3A+%7BDesigning+-+Done%7D+..+%7BProduct+Owner+Review%7D+Regression%3A+Yes+order+by%3A+updated+desc&max=100"
     }
   ],
   "States": [
