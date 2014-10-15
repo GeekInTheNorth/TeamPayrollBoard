@@ -7,7 +7,7 @@ function StartUpdate() {
 
     $.ajax({
         type: "Get",
-        url: "/Data/Configuration.json",
+        url: "./Data/Configuration.json",
         dataType: "json",
         headers: {
             accept: 'application/json'
