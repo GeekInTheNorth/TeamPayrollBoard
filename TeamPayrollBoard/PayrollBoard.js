@@ -17,31 +17,28 @@ function StartUpdate() {
         }
     });
     
-    window.setTimeout(function () { StartUpdate(); }, 300000);
+    window.setTimeout(function () { StartUpdate(); }, 30000);
 }
 
 function UpdateYouTrackData(jsonData) {
-    var countUrls = [];
-    var latestItemsUrl = "";
     var states = [];
+    var screenConfig;
+    var screenIndex = parseInt($('body').attr("data-current-screen-index"));
     
+    $("#container-page-title").remove();
+    $("#YouTrackItemList").remove();
+    $("#Count-Pending-Items").remove();
+
     for (var key in jsonData) {
-        if (key == "LatestItemsUrl") {
-            latestItemsUrl = jsonData[key];
-        } else if (key == "CountUrls") {
-            var boardInformations = jsonData[key];
-            
-            for (var boardInformation in boardInformations) {
-                var name = "";
-                var url = "";
-                for (var boardInformationKey in boardInformations[boardInformation]) {
-                    if (boardInformationKey == "Name")
-                        name = boardInformations[boardInformation][boardInformationKey];
-                    if (boardInformationKey == "Url")
-                        url = boardInformations[boardInformation][boardInformationKey];
-                }
-                countUrls[name] = url;                
-            }
+        if (key == "NumberOfScreens") {
+            var numberOfScreens = parseInt(jsonData[key]);
+            screenIndex += 1;
+            if (screenIndex >= numberOfScreens)
+                screenIndex = 0;
+            $('body').attr("data-current-screen-index", screenIndex);
+        } else if (key == "Screens") {
+            var screenConfigs = jsonData[key];
+            screenConfig = screenConfigs[screenIndex.toString()];
         } else if (key == "States") {
             var stateInformations = jsonData[key];
 
@@ -58,11 +55,30 @@ function UpdateYouTrackData(jsonData) {
             }
         }
     }
-    
-    GetLatestUpdatedItems(latestItemsUrl);
-    for (var countUrl in countUrls)
-        CountYouTrackItemsOnBoard(countUrl, countUrls[countUrl], states);
+
+    if (screenConfig != null) {
+        var dataType = "";
+        var youTrackUrl = "";
+        for (var screenKey in screenConfig) {
+            if (screenKey == "DisplayName") {
+                var pageTitle = screenConfig[screenKey];
+                $("body").append('<div class="page-title" id="container-page-title">' + pageTitle + '</div>');
+            } else if (screenKey == "DataType") {
+                dataType = screenConfig[screenKey];
+            } else if (screenKey == "Url") {
+                youTrackUrl = screenConfig[screenKey];
+            }
+        }
+        
+        if (dataType == "ItemList") {
+            GetLatestUpdatedItems(youTrackUrl);
+        } else if (dataType == "StateCounts") {
+            CountYouTrackItemsOnBoard(youTrackUrl, states);
+        }
+    }
 }
+
+
 
 function GetLatestUpdatedItems(youTrackUrl) {
     $.ajax({
@@ -80,9 +96,7 @@ function GetLatestUpdatedItems(youTrackUrl) {
 }
 
 function DisplayLatestUpdatedItems(jsonData) {
-    $("#YouTrackItemList").empty();
-    
-    var markUp = '<table class="issue-list">';
+    var markUp = '<div class="issue-list" id="YouTrackItemList"><table class="issue-list">';
     
     for (var key in jsonData) {
         var youTrackId = "";
@@ -123,11 +137,11 @@ function DisplayLatestUpdatedItems(jsonData) {
         markUp = markUp + DisplayYouTrackItem(boardType, youTrackId, youTrackTitle, youTrackUser, youTrackType, updated, youTrackState);
     }
 
-    markUp = markUp + '</table>';
-    $("#YouTrackItemList").append(markUp);
+    markUp = markUp + '</table></div>';
+    $("body").append(markUp);
 }
 
-function CountYouTrackItemsOnBoard(boardName, youTrackUrl, states) {
+function CountYouTrackItemsOnBoard(youTrackUrl, states) {
     $.ajax({
         url: youTrackUrl,
         dataType: "json",
@@ -135,14 +149,14 @@ function CountYouTrackItemsOnBoard(boardName, youTrackUrl, states) {
             accept: 'application/json'
         },
         success: function(jsonData) {
-            CountIssues(boardName, jsonData, states);
+            CountIssues(jsonData, states);
         },
         error: function() {
         }
     });
 }
 
-function CountIssues(boardName, jsonData, states) {
+function CountIssues(jsonData, states) {
     var counts = [];
     for (var stateName in states)
         counts[stateName] = 0;
@@ -172,27 +186,18 @@ function CountIssues(boardName, jsonData, states) {
             counts[youTrackState]++;
         }
     }
-    DisplayCounts(boardName, counts, states);
+    DisplayCounts(counts, states);
 }
 
-function DisplayCounts(boardName, counts, states) {
-    var clearDivId = "Clear-" + CleanseCountName(boardName);
-    var countsDivId = "Count-" + CleanseCountName(boardName);
+function DisplayCounts(counts, states) {
+    $("body").append('<div class="payroll-board" id="Count-Pending-Items"></div>');
 
-    $("#" + clearDivId).remove();
-    $("#" + countsDivId).remove();
-
-    $("body").append('<div class="clear" id="' + clearDivId + '"></div>');
-    $("body").append('<div class="payroll-board" id="' + countsDivId + '"></div>');
-
-    var boardCounts = $("#" + countsDivId);
-    
-    boardCounts.append('<div class="payroll-board-type"><span class="large-text">' + boardName + '</span></div>');
+    var boardCounts = $("#Count-Pending-Items");
     
     for (var stateName in states)
-        boardCounts.append('<div class="payroll-board-state"><span>' + states[stateName] + '</span><br/><span class="large-text">' + counts[stateName] + '</span></div>');
+        boardCounts.append('<div class="payroll-board-state"><table class="board-count"><tr><td class="board-count-title">' + states[stateName] + '</td><td class="board-count-number">' + counts[stateName] + '</td></tr></table></div>');
     
-    boardCounts.append('<div class="payroll-board-state"><span>Total</span><br/><span class="large-text">' + counts["PayrollBoardTotal"] + '</span></div>');
+    boardCounts.append('<div class="payroll-board-state"><table class="board-count"><tr><td class="board-count-title">Total</td><td class="board-count-number">' + counts["PayrollBoardTotal"] + '</td></tr></table></div>');
 }
 
 function DisplayYouTrackItem(boardType, youTrackId, youTrackTitle, youTrackUser, youTrackType, updated, youTrackState) {

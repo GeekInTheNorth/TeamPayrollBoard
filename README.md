@@ -12,12 +12,22 @@ While Youtrack is great for getting an overall feel for where we are, I wanted a
 <li>How many working days we have left</li>
 </ul>
 
+DONE - 15/10/2014
+====
+<ul>
+<li>Show Summary Titles based on configured data</li>
+<li>Removed place-holders for Days In Sprint numbers since they were not operable yet</li>
+<li>Displayed Item Counts and Latest Items separately on a rotating cycle</li>
+</ul>
+
 TODO
 ====
 <ul>
-<li>Implement the Days until Cut-off counters</li>
 <li>Template the Configuration.json</li>
 <li>Implement a How to Use</li>
 <li>Retitle to something less tied to my Dev. Team.</li>
 <li>Allow the Refresh time to be configured</li>
+<li>Clean up classes and styles</li>
+<li>Try and remove tables from count screens</li>
+<li>Make the totals count a different colour to the other counts<li>
 </ul>

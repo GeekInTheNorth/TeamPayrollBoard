@@ -1,5 +1,7 @@
 ﻿body {
     background-color: black;
+    margin: 0;
+    padding: 0;
 }
 
 div.payroll-board-top {
@@ -14,7 +16,7 @@ div.payroll-board {
     margin-right: auto;
 }
 
-div.page-title, div.payroll-board-type, div.days-until {
+div.page-title, div.payroll-board-type {
     background-color: #3434B2;
     border-color: #C4C4E8;
     color: #C4C4E8;
@@ -26,30 +28,37 @@ div.payroll-board-state {
     color: #3434B2;
 }
 
+table.board-count {
+    width: 100%;
+}
+
+td.board-count-title {
+    font-size: 3em;
+    width: 70%;
+}
+
+td.board-count-number {
+    font-size: 4em;
+    width: 30%;
+}
+
 div.payroll-board-type, div.payroll-board-state {
-    width: 9.3%;
+    width: 49%;
     min-width: 150px;
     height: 100px;
     float: left;
-}
-
-div.days-until {
-    width: 20%;
-    height: 100px;
-    float: left;
-    min-width: 200px;
 }
 
 div.page-title {
     font-size:4em;
     height: 100px;
     float: left;
-    width:58%;
+    width:99.5%;
     min-width: 500px;
 }
 
 div.page-title, div.days-until, div.payroll-board-type, div.payroll-board-state {
-    margin: 2px 2px 2px 2px;
+    margin: 2px 0 2px 0;
     padding: 2px 2px 2px 2px;
     text-align: center;
     font-family: Tahoma;
