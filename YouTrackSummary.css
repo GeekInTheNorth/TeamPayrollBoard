@@ -4,28 +4,40 @@
     padding: 0;
 }
 
-div.payroll-board-top {
-    text-align: center;
-    margin-left: auto;
-    margin-right: auto;
-}
-
 div.payroll-board {
     width: 100%;
     margin-left: auto;
     margin-right: auto;
 }
 
-div.page-title, div.payroll-board-type {
+div.page-title {
     background-color: #3434B2;
     border-color: #C4C4E8;
     color: #C4C4E8;
+    font-size:4em;
+    height: 100px;
+    float: left;
+    width:99.5%;
+    min-width: 500px;
 }
 
 div.payroll-board-state {
     background-color: #C4C4E8;
     border-color: #3434B2;
     color: #3434B2;
+    width: 49%;
+    min-width: 150px;
+    height: 100px;
+    float: left;
+}
+
+div.page-title, div.payroll-board-state {
+    margin: 2px 0 2px 0;
+    padding: 2px 2px 2px 2px;
+    text-align: center;
+    font-family: Tahoma;
+    border-style: solid;
+    border-width: 1px;
 }
 
 table.board-count {
@@ -42,36 +54,8 @@ td.board-count-number {
     width: 30%;
 }
 
-div.payroll-board-type, div.payroll-board-state {
-    width: 49%;
-    min-width: 150px;
-    height: 100px;
-    float: left;
-}
-
-div.page-title {
-    font-size:4em;
-    height: 100px;
-    float: left;
-    width:99.5%;
-    min-width: 500px;
-}
-
-div.page-title, div.days-until, div.payroll-board-type, div.payroll-board-state {
-    margin: 2px 0 2px 0;
-    padding: 2px 2px 2px 2px;
-    text-align: center;
-    font-family: Tahoma;
-    border-style: solid;
-    border-width: 1px;
-}
-
 div.clear {
     clear: both;
-}
-
-td.youtrack-id, span.large-text {
-    font-size: 4em;
 }
 
 div.issue-list {
@@ -100,6 +84,7 @@ tr.youtrack-first-row, tr.youtrack-middle-row, tr.youtrack-last-row {
 td.youtrack-id {
     text-align: center;
     vertical-align: middle;
+    font-size: 4em;
 }
 
 td.youtrack-body {

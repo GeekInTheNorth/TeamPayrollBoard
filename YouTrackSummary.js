@@ -196,8 +196,9 @@ function DisplayCounts(counts, states) {
     
     for (var stateName in states)
         boardCounts.append('<div class="payroll-board-state"><table class="board-count"><tr><td class="board-count-title">' + states[stateName] + '</td><td class="board-count-number">' + counts[stateName] + '</td></tr></table></div>');
-    
-    boardCounts.append('<div class="payroll-board-state"><table class="board-count"><tr><td class="board-count-title">Total</td><td class="board-count-number">' + counts["PayrollBoardTotal"] + '</td></tr></table></div>');
+
+    boardCounts.append('<div class="clear"></div>');
+    boardCounts.append('<div class="page-title">Total : ' + counts["PayrollBoardTotal"] + '</div>');
 }
 
 function DisplayYouTrackItem(boardType, youTrackId, youTrackTitle, youTrackUser, youTrackType, updated, youTrackState) {
