@@ -20,7 +20,7 @@ function StartUpdate() {
         }        
     });
     
-    window.setTimeout(function () { StartUpdate(); }, 3000);
+    window.setTimeout(function () { StartUpdate(); }, 30000);
 }
 
 function UpdateYouTrackData(jsonData) {
