@@ -3,7 +3,7 @@
 });
 
 function StartUpdate() {
-    $("#YouTrackItemList").empty();
+    RemoveContent();
 
     $.ajax({
         type: "Get",
@@ -14,10 +14,13 @@ function StartUpdate() {
         },
         success: function (jsonData) {
             UpdateYouTrackData(jsonData);
-        }
+        },
+        error: function () {
+            DisplayConnectionError();
+        }        
     });
     
-    window.setTimeout(function () { StartUpdate(); }, 30000);
+    window.setTimeout(function () { StartUpdate(); }, 3000);
 }
 
 function UpdateYouTrackData(jsonData) {
@@ -25,10 +28,6 @@ function UpdateYouTrackData(jsonData) {
     var screenConfig;
     var screenIndex = parseInt($('body').attr("data-current-screen-index"));
     
-    $("#container-page-title").remove();
-    $("#YouTrackItemList").remove();
-    $("#Count-Pending-Items").remove();
-
     for (var key in jsonData) {
         if (key == "NumberOfScreens") {
             var numberOfScreens = parseInt(jsonData[key]);
@@ -91,6 +90,7 @@ function GetLatestUpdatedItems(youTrackUrl) {
             DisplayLatestUpdatedItems(jsonData);
         },
         error: function () {
+            DisplayConnectionError();
         }
     });
 }
@@ -151,7 +151,8 @@ function CountYouTrackItemsOnBoard(youTrackUrl, states) {
         success: function(jsonData) {
             CountIssues(jsonData, states);
         },
-        error: function() {
+        error: function () {
+            DisplayConnectionError();
         }
     });
 }
@@ -211,6 +212,11 @@ function DisplayYouTrackItem(boardType, youTrackId, youTrackTitle, youTrackUser,
     return markUp;
 }
 
+function DisplayConnectionError() {
+    RemoveContent();
+    $("body").append('<div class="error-panel" id="connection-error-message">Oh dear, I could not connect to the YouTrack server!</div>');
+}
+
 function ConvertYouTrackDate(milliseconds) {
     var thisDate = new Date(0);
     thisDate.setMilliseconds(milliseconds);
@@ -243,6 +249,9 @@ function ConvertYouTrackDate(milliseconds) {
     return displayString;
 }
 
-function CleanseCountName(name) {
-    return name.replace(" ", "").replace(".", "").replace("'", "");
+function RemoveContent() {
+    $("#container-page-title").remove();
+    $("#YouTrackItemList").remove();
+    $("#Count-Pending-Items").remove();
+    $("#connection-error-message").remove();
 }

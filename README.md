@@ -12,9 +12,10 @@ While Youtrack is great for getting an overall feel for where we are, I wanted a
 <li>How many working days we have left</li>
 </ul>
 
-DONE - 15/10/2014
+DONE - last Updated 20/10/2014
 ====
 <ul>
+<li>Display an error message when failing to connect to Youtrack</li>
 <li>Show Summary Titles based on configured data</li>
 <li>Removed place-holders for Days In Sprint numbers since they were not operable yet</li>
 <li>Displayed Item Counts and Latest Items separately on a rotating cycle</li>

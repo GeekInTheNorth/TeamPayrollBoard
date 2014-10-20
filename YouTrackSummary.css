@@ -31,13 +31,22 @@ div.payroll-board-state {
     float: left;
 }
 
-div.page-title, div.payroll-board-state {
+div.page-title, div.payroll-board-state, div.error-panel {
     margin: 2px 0 2px 0;
     padding: 2px 2px 2px 2px;
     text-align: center;
     font-family: Tahoma;
     border-style: solid;
     border-width: 1px;
+}
+
+div.error-panel {
+    background-color: maroon;
+    border-color: red;
+    color: white;
+    font-size: 4em;
+    width: 99.5%;
+    height: 100px;
 }
 
 table.board-count {
