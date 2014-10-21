@@ -20,7 +20,7 @@ function StartUpdate() {
         }        
     });
     
-    window.setTimeout(function () { StartUpdate(); }, 30000);
+    window.setTimeout(function () { StartUpdate(); }, 3000);
 }
 
 function UpdateYouTrackData(jsonData) {
@@ -29,13 +29,13 @@ function UpdateYouTrackData(jsonData) {
     var screenIndex = parseInt($('body').attr("data-current-screen-index"));
     
     for (var key in jsonData) {
-        if (key == "NumberOfScreens") {
-            var numberOfScreens = parseInt(jsonData[key]);
+        if (key == "Screens") {
+            var numberOfScreens = Object.keys(jsonData[key]).length;
             screenIndex += 1;
             if (screenIndex >= numberOfScreens)
                 screenIndex = 0;
             $('body').attr("data-current-screen-index", screenIndex);
-        } else if (key == "Screens") {
+
             var screenConfigs = jsonData[key];
             screenConfig = screenConfigs[screenIndex.toString()];
         } else if (key == "States") {

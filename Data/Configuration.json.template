@@ -1,0 +1,28 @@
+{
+	"Screens": [
+		{
+			"DisplayName": "Example - Item List",
+			"DataType": "ItemList",
+			"Url": "Item List Url goes here"
+		},
+		{
+			"DisplayName": "Example - State Counts",
+			"DataType": "StateCounts",
+			"Url": "State Count Url goes here"
+		}
+	],
+	"States": [
+		{
+		  "DisplayName": "Pending",
+		  "Name": "Pending"
+		},
+		{
+			"DisplayName": "In Progress",
+			"Name": "In Progress"
+		},
+		{
+			"DisplayName": "Complete",
+			"Name": "Complete"
+		}
+	]
+}
