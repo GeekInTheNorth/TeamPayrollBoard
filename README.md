@@ -34,12 +34,24 @@ Edit the Configuration.json file and add an entry into the States collection for
 Edit the Configuration.json file and add an entry into Screens for set of information you wish to display.  There is no limit to the number of screens that can be displayed.  Here is an example from my configuration file:
 
 ```javascript
-{
-	"DisplayName": "Team Payroll - Regression",
-	"DataType": "StateCounts",
-	"Url": "http://youtrack:9111/rest/issue/byproject/PY?filter=project%3A+Payroll+Payroll+Board%3A+5.3+State%3A+%7BDesigning%7D+..+%7BComplete%7D+Regression%3A+Yes+order+by%3A+updated+desc&max=100"
-}
+"Screens": [
+		{
+			"DisplayName": "Team Payroll - Latest Items",
+			"DataType": "ItemList",
+			"Url": "http://youtrack:9111/rest/issue/byproject/PY?filter=project%3A+Payroll+State%3A+%7BDesigning%7D+..+%7BProduct+Owner+Review%7D+order+by%3A+updated+desc&max=6"
+		},
+		{
+			"DisplayName": "Team Payroll - Development",
+			"DataType": "StateCounts",
+			"Url": "http://youtrack:9111/rest/issue/byproject/PY?filter=project%3A+Payroll+Payroll+Board%3A+5.3+State%3A+%7BDesigning%7D+..+%7BComplete%7D+Regression%3A+No+order+by%3A+updated+desc&max=100"
+		}
+	]
 ```
+
+There are two DataType values that decide how data is rendered in the summary:
+
+* A DataType of ItemList will display a summary of each Youtrack item in the list.  I set my Youtrack filter to order by the updated field in descending order and I added "&max=6" to limit the number of issues to display on this summary screen.
+* A DataType of StateCounts will count just the items at each state and display the state's DisplayName and the number of items.  I added "&max=100" to limit the results from youtrack, not because I expect a hundred items, but because by default it returns only a smaller number of items than I needed to have counted.
 
 DONE
 ====
