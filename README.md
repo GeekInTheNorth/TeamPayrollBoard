@@ -71,10 +71,12 @@ To configure the Events data, rename the ./Data/Events.json.template to remove t
 }
 ```
 
+The refresh rate can also be set for the webpage.  This is measured in milliseconds and is set in Configuration.json under the aptly named RefreshRate key.
+
 DONE
 ====
 
-last Updated 21/10/2014
+last Updated 22/10/2014
 
 * Display an error message when failing to connect to Youtrack
 * Show Summary Titles based on configured data
@@ -87,6 +89,8 @@ last Updated 21/10/2014
 * Make the totals count a different colour to the other counts
 * Removed the need to configure the number of screens to cycle through
 * Added the ability to list a number of events
+* Added the ability to configure the refresh rate for the page.
+* Removed the float from the title that could sometimes result in items being displayed to the right of the title box.
 
 TODO
 ====
