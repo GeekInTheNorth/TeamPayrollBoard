@@ -78,7 +78,7 @@ function UpdateYouTrackData(jsonData) {
         } else if (dataType == "StateCounts") {
             CountYouTrackItemsOnBoard(dataUrl, states);
         } else if (dataType == "Events") {
-            GetKeyDates(dataUrl, numberOfItems);
+            GetEvents(dataUrl, numberOfItems);
         }
     }
 }
@@ -253,7 +253,7 @@ function ConvertYouTrackDate(milliseconds) {
     return displayString;
 }
 
-function GetKeyDates(dataUrl, numberOfItems) {
+function GetEvents(dataUrl, numberOfItems) {
     $.ajax({
         type: "Get",
         url: dataUrl,
