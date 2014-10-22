@@ -1,5 +1,5 @@
-TeamPayrollBoard
-================
+Youtrack Information Radiator
+=============================
 
 An Information Radiator for my development team "Team Payroll".  We use Youtrack as a Kanban board and for tracking pieced of work on and off the board which is then in connected to Team City and a private Git server.
 
