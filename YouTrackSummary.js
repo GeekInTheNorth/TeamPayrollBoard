@@ -20,7 +20,7 @@ function StartUpdate() {
         }        
     });
     
-    window.setTimeout(function () { StartUpdate(); }, 3000);
+    window.setTimeout(function () { StartUpdate(); }, 30000);
 }
 
 function UpdateYouTrackData(jsonData) {
@@ -57,7 +57,9 @@ function UpdateYouTrackData(jsonData) {
 
     if (screenConfig != null) {
         var dataType = "";
-        var youTrackUrl = "";
+        var dataUrl = "";
+        var numberOfItems = 0;
+        
         for (var screenKey in screenConfig) {
             if (screenKey == "DisplayName") {
                 var pageTitle = screenConfig[screenKey];
@@ -65,19 +67,21 @@ function UpdateYouTrackData(jsonData) {
             } else if (screenKey == "DataType") {
                 dataType = screenConfig[screenKey];
             } else if (screenKey == "Url") {
-                youTrackUrl = screenConfig[screenKey];
+                dataUrl = screenConfig[screenKey];
+            } else if (screenKey == "NumberOfItems") {
+                numberOfItems = parseInt(screenConfig[screenKey]);
             }
         }
         
         if (dataType == "ItemList") {
-            GetLatestUpdatedItems(youTrackUrl);
+            GetLatestUpdatedItems(dataUrl);
         } else if (dataType == "StateCounts") {
-            CountYouTrackItemsOnBoard(youTrackUrl, states);
+            CountYouTrackItemsOnBoard(dataUrl, states);
+        } else if (dataType == "Events") {
+            GetKeyDates(dataUrl, numberOfItems);
         }
     }
 }
-
-
 
 function GetLatestUpdatedItems(youTrackUrl) {
     $.ajax({
@@ -191,9 +195,9 @@ function CountIssues(jsonData, states) {
 }
 
 function DisplayCounts(counts, states) {
-    $("body").append('<div class="payroll-board" id="Count-Pending-Items"></div>');
+    $("body").append('<div class="payroll-board" id="YouTrackItemCount"></div>');
 
-    var boardCounts = $("#Count-Pending-Items");
+    var boardCounts = $("#YouTrackItemCount");
     
     for (var stateName in states)
         boardCounts.append('<div class="payroll-board-state"><table class="board-count"><tr><td class="board-count-title">' + states[stateName] + '</td><td class="board-count-number">' + counts[stateName] + '</td></tr></table></div>');
@@ -249,9 +253,68 @@ function ConvertYouTrackDate(milliseconds) {
     return displayString;
 }
 
+function GetKeyDates(dataUrl, numberOfItems) {
+    $.ajax({
+        type: "Get",
+        url: dataUrl,
+        dataType: "json",
+        headers: {
+            accept: 'application/json'
+        },
+        success: function (jsonData) {
+            DrawEvents(jsonData, numberOfItems);
+        },
+        error: function () {
+            DisplayConnectionError();
+        }
+    });
+}
+
+function DrawEvents(jsonData, numberOfItems) {
+    var markUp = '<div class="event-list" id="EventList"><table class="event-list">';
+    var eventDatesDrawn = 0;
+    var allEventsData = jsonData["Events"];
+
+    for (var key in allEventsData) {
+        var eventData = allEventsData[key];
+        var today = new Date();
+        var eventDate = new Date();
+        var eventDescription = "";
+
+        for (var eventDataKey in eventData) {
+            if (eventDataKey == "Date") {
+                eventDate = parseDate(eventData[eventDataKey]);
+            } else if (eventDataKey == "Event") {
+                eventDescription = eventData[eventDataKey];
+            }
+        }
+        
+        if (eventDate >= today) {
+            var dateString = $.format.date(eventDate, "dd/MM/yyyy");
+            if (eventDate === today)
+                dateString = "Today";
+
+            if (eventDatesDrawn < numberOfItems)
+                markUp += '<tr><td class="event-date">' + dateString + '</td><td class="event-detail">' + eventDescription + '</td></tr>';
+            
+            eventDatesDrawn++;
+        }
+    }
+
+    markUp = markUp + '</table></div>';
+    $("body").append(markUp);
+}
+
 function RemoveContent() {
     $("#container-page-title").remove();
     $("#YouTrackItemList").remove();
-    $("#Count-Pending-Items").remove();
+    $("#YouTrackItemCount").remove();
+    $("#EventList").remove();
     $("#connection-error-message").remove();
+}
+
+function parseDate(input) {
+    var parts = input.split('-');
+    // new Date(year, month [, day [, hours[, minutes[, seconds[, ms]]]]])
+    return new Date(parts[0], parts[1] - 1, parts[2]); // Note: months are 0-based
 }

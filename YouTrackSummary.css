@@ -15,10 +15,10 @@ div.page-title {
     border-color: #C4C4E8;
     color: #C4C4E8;
     font-size:4em;
-    height: 100px;
     float: left;
     width:99.5%;
     min-width: 500px;
+    height: 100px;
 }
 
 div.payroll-board-state {
@@ -67,21 +67,21 @@ div.clear {
     clear: both;
 }
 
-div.issue-list {
+div.issue-list, div.event-list {
     width: 100%;
 }
 
-table.issue-list {
+table.issue-list, table.event-list {
     width: 100%;
     border: solid 1px #3434B2;
     border-collapse: collapse;
 }
 
-tr.youtrack-first-row {
+tr.youtrack-first-row, td.event-detail, td.event-date {
     border-top: solid 2px #3434B2;
 }
 
-tr.youtrack-last-row {
+tr.youtrack-last-row, td.event-detail, td.event-date {
     border-bottom: solid 2px #3434B2;
 }
 
@@ -92,8 +92,15 @@ tr.youtrack-first-row, tr.youtrack-middle-row, tr.youtrack-last-row {
 
 td.youtrack-id {
     text-align: center;
+}
+
+td.youtrack-id, td.event-detail, td.event-date {
     vertical-align: middle;
     font-size: 4em;
+}
+
+td.event-detail, td.event-date {
+    padding: 3px;
 }
 
 td.youtrack-body {
@@ -103,7 +110,7 @@ td.youtrack-body {
     padding-bottom: 1px;
 }
 
-td.youtrack-id, td.youtrack-body {
+td.youtrack-id, td.youtrack-body, td.event-detail, td.event-date {
     background-color: #C4C4E8;
     border-color: #3434B2;
     color: #3434B2;
