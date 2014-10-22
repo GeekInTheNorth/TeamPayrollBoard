@@ -19,8 +19,9 @@ function StartUpdate() {
             DisplayConnectionError();
         }        
     });
-    
-    window.setTimeout(function () { StartUpdate(); }, 30000);
+
+    var refreshRate = parseInt($('body').attr('data-refresh-rate'));
+    window.setTimeout(function () { StartUpdate(); }, refreshRate);
 }
 
 function UpdateYouTrackData(jsonData) {
@@ -52,6 +53,9 @@ function UpdateYouTrackData(jsonData) {
                 }
                 states[actualName] = displayName;
             }
+        } else if (key == "RefreshRate") {
+            var newRefreshRate = parseInt(jsonData[key]);
+            $('body').attr('data-refresh-rate', newRefreshRate);
         }
     }
 
@@ -195,12 +199,12 @@ function CountIssues(jsonData, states) {
 }
 
 function DisplayCounts(counts, states) {
-    $("body").append('<div class="payroll-board" id="YouTrackItemCount"></div>');
+    $("body").append('<div class="board" id="YouTrackItemCount"></div>');
 
     var boardCounts = $("#YouTrackItemCount");
     
     for (var stateName in states)
-        boardCounts.append('<div class="payroll-board-state"><table class="board-count"><tr><td class="board-count-title">' + states[stateName] + '</td><td class="board-count-number">' + counts[stateName] + '</td></tr></table></div>');
+        boardCounts.append('<div class="board-state"><table class="board-count"><tr><td class="board-count-title">' + states[stateName] + '</td><td class="board-count-number">' + counts[stateName] + '</td></tr></table></div>');
 
     boardCounts.append('<div class="clear"></div>');
     boardCounts.append('<div class="page-title">Total : ' + counts["PayrollBoardTotal"] + '</div>');

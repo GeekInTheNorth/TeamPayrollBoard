@@ -1,4 +1,5 @@
 {
+	"RefreshRate": "30000",
 	"Screens": [
 		{
 			"DisplayName": "Example - Item List",

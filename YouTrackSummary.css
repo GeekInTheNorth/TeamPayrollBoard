@@ -4,7 +4,7 @@
     padding: 0;
 }
 
-div.payroll-board {
+div.board {
     width: 100%;
     margin-left: auto;
     margin-right: auto;
@@ -15,13 +15,12 @@ div.page-title {
     border-color: #C4C4E8;
     color: #C4C4E8;
     font-size:4em;
-    float: left;
     width:99.5%;
     min-width: 500px;
     height: 100px;
 }
 
-div.payroll-board-state {
+div.board-state {
     background-color: #C4C4E8;
     border-color: #3434B2;
     color: #3434B2;
