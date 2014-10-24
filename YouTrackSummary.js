@@ -67,7 +67,8 @@ function UpdateYouTrackData(jsonData) {
         for (var screenKey in screenConfig) {
             if (screenKey == "DisplayName") {
                 var pageTitle = screenConfig[screenKey];
-                $("body").append('<div class="page-title" id="container-page-title">' + pageTitle + '</div>');
+                var screenWidth = $(window).width();
+                $("body").append('<div class="page-title" id="container-page-title" style="width: ' + (screenWidth - 22) + 'px;">' + pageTitle + '</div>');
             } else if (screenKey == "DataType") {
                 dataType = screenConfig[screenKey];
             } else if (screenKey == "Url") {
@@ -199,15 +200,21 @@ function CountIssues(jsonData, states) {
 }
 
 function DisplayCounts(counts, states) {
+    var screenWidth = $(window).width();
+    var stateTotal = screenWidth;
+    if (stateTotal > 750)
+        stateTotal = Math.floor(stateTotal / 2);
+    stateTotal = stateTotal - 9;
+    
     $("body").append('<div class="board" id="YouTrackItemCount"></div>');
 
     var boardCounts = $("#YouTrackItemCount");
     
     for (var stateName in states)
-        boardCounts.append('<div class="board-state"><table class="board-count"><tr><td class="board-count-title">' + states[stateName] + '</td><td class="board-count-number">' + counts[stateName] + '</td></tr></table></div>');
+        boardCounts.append('<div class="board-state" style="width: ' + stateTotal + 'px;"><table class="board-count"><tr><td class="board-count-title">' + states[stateName] + '</td><td class="board-count-number">' + counts[stateName] + '</td></tr></table></div>');
 
     boardCounts.append('<div class="clear"></div>');
-    boardCounts.append('<div class="page-title">Total : ' + counts["PayrollBoardTotal"] + '</div>');
+    boardCounts.append('<div class="page-title" style="width: ' + (screenWidth - 22) + 'px;">Total : ' + counts["PayrollBoardTotal"] + '</div>');
 }
 
 function DisplayYouTrackItem(boardType, youTrackId, youTrackTitle, youTrackUser, youTrackType, updated, youTrackState) {

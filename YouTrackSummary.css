@@ -2,6 +2,7 @@
     background-color: black;
     margin: 0;
     padding: 0;
+    font-family: Tahoma;
 }
 
 div.board {
@@ -15,19 +16,16 @@ div.page-title {
     border-color: #C4C4E8;
     color: #C4C4E8;
     font-size:4em;
-    width:99.5%;
     min-width: 500px;
-    height: 100px;
+    padding: 10px !important;
 }
 
 div.board-state {
     background-color: #C4C4E8;
-    border-color: #3434B2;
+    border: #3434b2 1px solid;
     color: #3434B2;
-    width: 49%;
-    min-width: 150px;
-    height: 100px;
     float: left;
+    padding: 3px;
 }
 
 div.page-title, div.payroll-board-state, div.error-panel {
@@ -45,7 +43,7 @@ div.error-panel {
     color: white;
     font-size: 4em;
     width: 99.5%;
-    height: 100px;
+    padding: 10px;
 }
 
 table.board-count {
