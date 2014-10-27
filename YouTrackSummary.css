@@ -89,11 +89,13 @@ tr.youtrack-first-row, tr.youtrack-middle-row, tr.youtrack-last-row {
 
 td.youtrack-id {
     text-align: center;
-}
-
-td.youtrack-id, td.event-detail, td.event-date {
     vertical-align: middle;
     font-size: 4em;
+}
+
+td.event-detail, td.event-date {
+    vertical-align: middle;
+    font-size: 3em;
 }
 
 td.event-detail, td.event-date {
