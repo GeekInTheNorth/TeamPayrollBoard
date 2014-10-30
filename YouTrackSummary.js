@@ -235,9 +235,17 @@ function DisplayConnectionError() {
 function ConvertYouTrackDate(milliseconds) {
     var thisDate = new Date(0);
     thisDate.setMilliseconds(milliseconds);
-    
-    // using getUTCHours gives us an hour earlier rather than later. I believe this is data related. So having to manually add an hour for the moment
-    thisDate.setTime(thisDate.getTime() + (60 * 60 * 1000));
+
+    // YouTrack stores seconds, we need to convert this from a UTC datetime to a local datetime
+    // Previously we handled this by adding an hour which worked for our own location
+    var dateString = thisDate.toString();
+    if (dateString.indexOf("GMT") >= 0) {
+        dateString = dateString.substring(0, dateString.indexOf("GMT"));
+        dateString.trim();
+        dateString += "UTC";
+
+        thisDate = new Date(dateString);
+    }
     
     var displayString = "";
 
