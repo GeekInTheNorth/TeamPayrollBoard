@@ -91,6 +91,7 @@ last Updated 22/10/2014
 * Added the ability to list a number of events
 * Added the ability to configure the refresh rate for the page.
 * Removed the float from the title that could sometimes result in items being displayed to the right of the title box.
+* Changed logic for turning Youtrack milliseconds into a date and time
 
 TODO
 ====
