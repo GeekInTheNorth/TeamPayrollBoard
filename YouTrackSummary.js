@@ -293,10 +293,17 @@ function DrawEvents(jsonData, numberOfItems) {
     var markUp = '<div class="event-list" id="EventList"><table class="event-list">';
     var eventDatesDrawn = 0;
     var allEventsData = jsonData["Events"];
+    
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+    var todayString = $.format.date(today, "dd/MM/yyyy");
+
+    var tomorrow = new Date(today.getTime() + (24 * 60 * 60 * 1000));
+    var tomorrowString = $.format.date(tomorrow, "dd/MM/yyyy");
+    
 
     for (var key in allEventsData) {
         var eventData = allEventsData[key];
-        var today = new Date();
         var eventDate = new Date();
         var eventDescription = "";
 
@@ -310,8 +317,10 @@ function DrawEvents(jsonData, numberOfItems) {
         
         if (eventDate >= today) {
             var dateString = $.format.date(eventDate, "dd/MM/yyyy");
-            if (eventDate === today)
+            if (dateString == todayString)
                 dateString = "Today";
+            else if (dateString == tomorrowString)
+                dateString = "Tomorrow";
 
             if (eventDatesDrawn < numberOfItems)
                 markUp += '<tr><td class="event-date">' + dateString + '</td><td class="event-detail">' + eventDescription + '</td></tr>';
