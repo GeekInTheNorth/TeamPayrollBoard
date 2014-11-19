@@ -5,3 +5,4 @@ packages/*.*
 packages.config
 Events.json
 Configuration.json
+Messages.json

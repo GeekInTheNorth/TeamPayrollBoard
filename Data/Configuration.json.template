@@ -10,6 +10,17 @@
 			"DisplayName": "Example - State Counts",
 			"DataType": "StateCounts",
 			"Url": "State Count Url goes here"
+		},
+		{
+			"DisplayName": "Example - Upcoming Events",
+			"DataType": "Events",
+			"Url": "Event Json Url goes here",
+			"NumberOfItems": "10"
+		},
+		{
+			"DisplayName": "Messages",
+			"DataType": "Messages",
+			"Url": "Message Json Url goes here"
 		}
 	],
 	"States": [

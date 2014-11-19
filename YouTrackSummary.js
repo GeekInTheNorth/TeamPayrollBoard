@@ -84,6 +84,8 @@ function UpdateYouTrackData(jsonData) {
             CountYouTrackItemsOnBoard(dataUrl, states);
         } else if (dataType == "Events") {
             GetEvents(dataUrl, numberOfItems);
+        } else if (dataType == "Messages") {
+            GetMessages(dataUrl);
         }
     }
 }
@@ -229,7 +231,8 @@ function DisplayYouTrackItem(boardType, youTrackId, youTrackTitle, youTrackUser,
 
 function DisplayConnectionError() {
     RemoveContent();
-    $("body").append('<div class="error-panel" id="connection-error-message">Oh dear, I could not connect to the YouTrack server!</div>');
+    var screenWidth = $(window).width();
+    $("body").append('<div class="error-panel" id="connection-error-message" style="width: ' + (screenWidth - 23) + 'px;">Oh dear, I could not connect to the datasource!</div>');
 }
 
 function ConvertYouTrackDate(milliseconds) {
@@ -333,11 +336,43 @@ function DrawEvents(jsonData, numberOfItems) {
     $("body").append(markUp);
 }
 
+function GetMessages(dataUrl) {
+    $.ajax({
+        type: "Get",
+        url: dataUrl,
+        dataType: "json",
+        headers: {
+            accept: 'application/json'
+        },
+        success: function (jsonData) {
+            DrawMessages(jsonData);
+        },
+        error: function () {
+            DisplayConnectionError();
+        }
+    });
+}
+
+function DrawMessages(jsonData) {
+    var markUp = '<div class="message-list" id="EventList"><table class="event-list">';
+    var allMessagesData = jsonData["Messages"];
+
+    for (var key in allMessagesData) {
+        var eventData = allMessagesData[key];
+        var messageText = eventData["Message"];
+        markUp += '<tr><td class="message-detail">' + messageText + '</td></tr>';
+    }
+
+    markUp = markUp + '</table></div>';
+    $("body").append(markUp);
+}
+
 function RemoveContent() {
     $("#container-page-title").remove();
     $("#YouTrackItemList").remove();
     $("#YouTrackItemCount").remove();
     $("#EventList").remove();
+    $("#message-list").remove();
     $("#connection-error-message").remove();
 }
 

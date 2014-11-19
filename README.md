@@ -50,6 +50,11 @@ Edit the Configuration.json file and add an entry into Screens for set of inform
 			"DataType": "Events",
 			"Url": "./Data/Events.json",
 			"NumberOfItems": "8"
+		},
+		{
+			"DisplayName": "Messages",
+			"DataType": "Messages",
+			"Url": "./Data/Messages.json"
 		}
 	]
 ```
@@ -71,12 +76,23 @@ To configure the Events data, rename the ./Data/Events.json.template to remove t
 }
 ```
 
+To configure the Messages data, rename the ./Data/Messages.json.template to remove the template extension and then replace the examples with events of your own.
+
+```javascript
+{
+	"Messages": [
+		{ "Message" : "Message Example 1" },
+		{ "Message" : "Message Example 2" }
+	]
+}
+```
+
 The refresh rate can also be set for the webpage.  This is measured in milliseconds and is set in Configuration.json under the aptly named RefreshRate key.
 
 DONE
 ====
 
-last Updated 22/10/2014
+last Updated 19/11/2014
 
 * Display an error message when failing to connect to Youtrack
 * Show Summary Titles based on configured data
@@ -92,9 +108,10 @@ last Updated 22/10/2014
 * Added the ability to configure the refresh rate for the page.
 * Removed the float from the title that could sometimes result in items being displayed to the right of the title box.
 * Changed logic for turning Youtrack milliseconds into a date and time
+* Added the ability to display a list of messages in a json file
+* Allow the Refresh time to be configured
 
 TODO
 ====
 
-* Allow the Refresh time to be configured
 * Try and remove tables from count screens
