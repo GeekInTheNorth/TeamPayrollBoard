@@ -1,0 +1,36 @@
+﻿body {
+    
+}
+
+table {
+    border: none;
+    border-collapse: collapse;
+}
+
+th {
+    background-color: steelblue;
+    color: white;
+    font-weight: bold;
+}
+
+.text-cell {
+    text-align: left;
+}
+
+.numeric-cell {
+    text-align: right;
+}
+
+.text-cell, .numeric-cell {
+    border: solid 1px cornflowerblue;
+    padding: 3px;
+
+}
+
+tr.normal-row {
+    background-color: white;
+}
+
+tr.alternate-row {
+    background-color: lightsteelblue;
+}

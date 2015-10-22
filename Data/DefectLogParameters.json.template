@@ -1,0 +1,12 @@
+﻿{
+  "ScreenDuration": "30000",
+  "NextScreenUrl": "./YouTrackSummary.html",
+  "YouTrackQueryUrl": "http://youtrack:9111/rest/issue/byproject/CAS?filter=project%3A+CAS+Type%3A+%7BRework+Task%7D+%2C+Bug+%2C+Defect+order+by%3A+created+desc&max=500",
+  "ReworkTypes": [
+    "Rework Task"
+  ],
+  "DefectTypes": [
+    "Bug",
+    "Defect"
+  ]
+}

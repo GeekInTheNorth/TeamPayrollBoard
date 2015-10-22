@@ -1,4 +1,8 @@
 ﻿$(document).ready(function () {
+    var startIndex = getURLParameter("DisplayIndex");
+    if (startIndex != null)
+        $('body').attr("data-current-screen-index", startIndex);
+
     StartUpdate();
 });
 
@@ -86,6 +90,8 @@ function UpdateYouTrackData(jsonData) {
             GetEvents(dataUrl, numberOfItems);
         } else if (dataType == "Messages") {
             GetMessages(dataUrl);
+        } else if (dataType == "Navigation") {
+			window.location.replace(dataUrl);
         }
     }
 }
@@ -193,10 +199,8 @@ function CountIssues(jsonData, states) {
                 }
             }
         }
-        if ((youTrackType != "Feature") && (youTrackType != "Task")) {
-            counts["PayrollBoardTotal"]++;
-            counts[youTrackState]++;
-        }
+        counts["PayrollBoardTotal"]++;
+        counts[youTrackState]++;
     }
     DisplayCounts(counts, states);
 }
@@ -380,4 +384,8 @@ function parseDate(input) {
     var parts = input.split('-');
     // new Date(year, month [, day [, hours[, minutes[, seconds[, ms]]]]])
     return new Date(parts[0], parts[1] - 1, parts[2]); // Note: months are 0-based
+}
+
+function getURLParameter(name) {
+    return decodeURIComponent((new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.search) || [, ""])[1].replace(/\+/g, '%20')) || null
 }
