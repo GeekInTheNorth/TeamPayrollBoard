@@ -1,8 +1,15 @@
-﻿$(document).ready(function () {
-    StartUpdate();
+﻿var youTrackIssues = [];
+var issuedLogged = [];
+var apisCompleted = 0;
+var settings = undefined;
+
+$(document).ready(function () {
+    ShowDefectSummary();
 });
 
-function StartUpdate() {
+function ShowDefectSummary() {
+    $("body").empty();
+
     $.ajax({
         type: "Get",
         url: "./Data/DefectLogParameters.json",
@@ -11,21 +18,23 @@ function StartUpdate() {
             accept: 'application/json'
         },
         success: function (jsonData) {
-            var settings = GetSettings(jsonData)
-            SetRefresh(settings.NextScreenUrl, settings.ScreenDuration);
+            LoadSettings(jsonData)
+            SetRefresh();
             GetYouTrackData(settings);
         }
     });
 }
 
-function GetSettings(jsonData)
+function LoadSettings(jsonData)
 {
-    var settings = new Object();
+    settings = new Object();
     settings.ScreenDuration = 0;
     settings.NextScreenUrl = undefined;
-    settings.YouTrackQueryUrl = undefined;
+    settings.YouTrackApiUrl = undefined;
+    settings.YouTrackIssueUrl = undefined;
     settings.ReworkTypes = [];
     settings.DefectTypes = [];
+    settings.Projects = [];
 
     for (var key in jsonData)
     {
@@ -33,8 +42,10 @@ function GetSettings(jsonData)
             settings.ScreenDuration = parseInt(jsonData[key]);
         } else if (key === "NextScreenUrl") {
             settings.NextScreenUrl = jsonData[key];
-        } else if (key === "YouTrackQueryUrl") {
-            settings.YouTrackQueryUrl = jsonData[key];
+        } else if (key === "YouTrackApiUrl") {
+            settings.YouTrackApiUrl = jsonData[key];
+        } else if (key === "YouTrackIssueUrl") {
+            settings.YouTrackIssueUrl = jsonData[key];
         } else if (key === "ReworkTypes") {
             var reworkCollection = jsonData[key];
             for (var reworkIndex in reworkCollection) {
@@ -47,57 +58,93 @@ function GetSettings(jsonData)
                 var defectTaskType = defectCollection[defectIndex];
                 settings.DefectTypes.push(defectTaskType);
             }
+        } else if (key === "Projects") {
+            var projectCollection = jsonData[key];
+            for (var projectIndex in projectCollection) {
+                var projectName = projectCollection[projectIndex];
+                settings.Projects.push(projectName);
+            }
         }
     }
-
-    return settings;
 }
 
 function GetYouTrackData(settings) {
-    $.ajax({
-        url: settings.YouTrackQueryUrl,
-        dataType: "json",
-        headers: {
-            accept: 'application/json'
-        },
-        success: function (jsonData) {
-            ParseYouTrackData(settings, jsonData);
-        }
-    });
+    youTrackIssues = [];
+    issuedLogged = [];
+    apisCompleted = 0;
+
+    var today = new Date();
+    var firstMonth = new Date(today.getFullYear() - 1, today.getMonth(), 1, 0, 0, 0, 0);
+    var monthCollection = GetMonthCollection();
+    var typesFilter = GetTypesFilter(settings);
+    var projectsFilter = GetProjectsFilter(settings);
+    
+    for (var monthLocation in monthCollection) {
+        var monthFilter = GetMonthTextQueryString(monthCollection[monthLocation].Description);
+        var filterText = projectsFilter + "+" + typesFilter + "+created%3A+" + monthFilter + "+or+" + projectsFilter + "+" + typesFilter + "+resolved%3A+" + monthFilter;
+        filterText += "+order+by%3A+created+desc&with=Type&with=created&with=Sprint&with=State&with=resolved&with=summary&with=id&max=500";
+
+        var queryText = settings.YouTrackApiUrl + filterText;
+
+        $.ajax({
+            url: queryText,
+            dataType: "json",
+            headers: {
+                accept: 'application/json'
+            },
+            success: function (jsonData) {
+                ConvertYouTrackDataToObjects(jsonData);
+                apisCompleted += 1;
+            },
+            error: function () {
+                apisCompleted += 1;
+            }
+        });
+    }
+
+    setTimeout(function () { DisplaySummaryWhenReady() }, 1000);
 }
 
-function ParseYouTrackData(settings, jsonData) {
-    var items = [];
-
-    for (var taskLocation in jsonData) {
-        var task = jsonData[taskLocation];
+function ConvertYouTrackDataToObjects(jsonData) {
+    for (var taskLocation in jsonData.issue) {
+        var task = jsonData.issue[taskLocation];
         var createdDate = undefined;
         var sprintName = undefined;
         var resolved = undefined;
         var state = undefined;
         var type = undefined;
+        var title = undefined;
+        var issueId = task.id;
+
+        if (issuedLogged.indexOf(issueId) > -1) continue;
+
+        issuedLogged.push(issueId);
 
         for (var fieldLocation in task.field) {
             var field = task.field[fieldLocation];
 
-            if (field.name == "Type") {
+            if (field.name === "Type") {
                 type = field.value[0];
             }
 
-            if (field.name == "created") {
+            if (field.name === "created") {
                 createdDate = ConvertYouTrackDate(field.value);
             }
 
-            if (field.name == "Sprint") {
+            if (field.name === "Sprint") {
                 sprintName = field.value[0];
             }
 
-            if (field.name == "State") {
+            if (field.name === "State") {
                 state = field.value[0];
             }
 
-            if (field.name == "resolved") {
+            if (field.name === "resolved") {
                 resolved = ConvertYouTrackDate(field.value);
+            }
+
+            if (field.name === "summary") {
+                title = field.value;
             }
         }
 
@@ -107,20 +154,32 @@ function ParseYouTrackData(settings, jsonData) {
         taskObject.Sprint = sprintName;
         taskObject.State = state;
         taskObject.Resolved = resolved;
+        taskObject.Title = title;
+        taskObject.IssueId = issueId;
 
-        items.push(taskObject);
+        youTrackIssues.push(taskObject);
     }
 
-    AnalyzeReworksBySprint(settings, items);
-    AnalyzeIssuesByMonth(settings, items);
+    return youTrackIssues;
 }
 
-function AnalyzeReworksBySprint(settings, tasks) {
+function DisplaySummaryWhenReady() {
+    if (apisCompleted === 13) {
+        AnalyzeReworksBySprint();
+        AnalyzeIssuesByMonth();
+    }
+    else
+    {
+        setTimeout(function () { DisplaySummaryWhenReady(settings) }, 1000);
+    }
+}
+
+function AnalyzeReworksBySprint() {
     var reworksBySprints = [];
 
-    for (var taskLocation in tasks)
+    for (var taskLocation in youTrackIssues)
     {
-        var task = tasks[taskLocation];
+        var task = youTrackIssues[taskLocation];
 
         if ($.inArray(task.Type, settings.ReworkTypes) === -1)
             continue;
@@ -186,11 +245,11 @@ function AnalyzeReworksBySprint(settings, tasks) {
     $("#table-rework-by-sprint tr:last").after(markUp);
 }
 
-function AnalyzeIssuesByMonth(settings, tasks) {
+function AnalyzeIssuesByMonth() {
     var monthData = GetMonthCollection();
 
-    for (var taskLocation in tasks) {
-        var task = tasks[taskLocation];
+    for (var taskLocation in youTrackIssues) {
+        var task = youTrackIssues[taskLocation];
         var createdDate = task.Created.substr(6, 4) + "-" + task.Created.substr(3, 2) + "-" + task.Created.substr(0, 2);
         var createdDescription = GetMonthString(new Date(createdDate));
 
@@ -235,7 +294,7 @@ function AnalyzeIssuesByMonth(settings, tasks) {
             rowClass = "normal-row";
 
         var markUp = "<tr class='" + rowClass + "'>";
-        markUp += "<td class='text-cell'>" + monthSummary.Description + "</td>";
+        markUp += "<td class='text-cell'><a href='#' onclick='DrilldownToMonthBreakdown(\"" + monthSummary.Description + "\");'>" + monthSummary.Description + "</a></td>";
         markUp += "<td class='numeric-cell'>" + monthSummary.ReworkItems + "</td>";
         markUp += "<td class='numeric-cell'>" + monthSummary.DefectsLogged + "</td>";
         markUp += "<td class='numeric-cell'>" + monthSummary.DefectsFixed + "</td>";
@@ -289,11 +348,98 @@ function ConvertYouTrackDate(milliseconds) {
     return displayString;
 }
 
+function SetRefresh() {
+    var navigationParameter = getURLParameter("DoNavigation");
+    if (navigationParameter != null && navigationParameter === "Yes")
+        window.setTimeout(function () { window.location.replace(settings.NextScreenUrl); }, settings.ScreenDuration);
+}
+
+function getURLParameter(name) {
+    return decodeURIComponent((new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.search) || [, ""])[1].replace(/\+/g, '%20')) || null
+}
+
+function DrilldownToMonthBreakdown(monthText) {
+    var defectRowClass = "";
+    var reworkRowClass = "";
+    var rowClass = "";
+    var defectRowNumber = 0;
+    var reworkRowNumber = 0;
+    var thisRowNumber = 0;
+
+    $("body").empty();
+
+    var markUp = "<h1>Defects Breakdown for " + monthText + "</h1>";
+    markUp += "<table id='table-defect-summary'>";
+    markUp += "<th class='text-cell'>#</th>"
+    markUp += "<th class='text-cell'>Issue Id</th>";
+    markUp += "<th class='text-cell'>Type</th>";
+    markUp += "<th class='text-cell'>Title</th>";
+    markUp += "<th class='numeric-cell'>Logged</th>";
+    markUp += "<th class='numeric-cell'>Fixed</th>";
+    markUp += "</tr></table>";
+    markUp += "<h1>Rework Breakdown for " + monthText + "</h1>";
+    markUp += "<table id='table-rework-summary'>";
+    markUp += "<th class='text-cell'>#</th>"
+    markUp += "<th class='text-cell'>Issue Id</th>";
+    markUp += "<th class='text-cell'>Type</th>";
+    markUp += "<th class='text-cell'>Title</th>";
+    markUp += "<th class='numeric-cell'>Logged</th>";
+    markUp += "<th class='numeric-cell'>Fixed</th>";
+    markUp += "</tr></table>";
+
+    $("body").append(markUp);
+
+    for (var issueIndex = 0; issueIndex < youTrackIssues.length; issueIndex++) {
+        var issue = youTrackIssues[issueIndex];
+        var includeItem = (GetStringDateAsMonthText(issue.Created) === monthText) || (GetStringDateAsMonthText(issue.Resolved) === monthText);
+
+        if (!includeItem) continue;
+
+        if (settings.ReworkTypes.indexOf(issue.Type) > -1) {
+            if (reworkRowClass === "normal-row")
+                reworkRowClass = "alternate-row";
+            else
+                reworkRowClass = "normal-row";
+            rowClass = reworkRowClass;
+            reworkRowNumber++;
+            thisRowNumber = reworkRowNumber;
+        } else {
+            if (defectRowClass === "normal-row")
+                defectRowClass = "alternate-row";
+            else
+                defectRowClass = "normal-row";
+            rowClass = defectRowClass;
+            defectRowNumber++;
+            thisRowNumber = defectRowNumber;
+        }
+
+        markUp = "<tr class='" + rowClass + "'>";
+        markUp += "<td class='numeric-cell'>" + thisRowNumber + "</td>";
+        markUp += "<td class='text-cell'><a href='" + settings.YouTrackIssueUrl + issue.IssueId + "' target='_blank'>" + issue.IssueId + "</a></td>";
+        markUp += "<td class='text-cell'>" + issue.Type + "</td>";
+        markUp += "<td class='text-cell'>" + issue.Title + "</td>";
+        markUp += "<td class='numeric-cell'>" + issue.Created + "</td>";
+
+        if (issue.Resolved === undefined)
+            markUp += "<td class='numeric-cell'>&nbsp;</td>";
+        else
+            markUp += "<td class='numeric-cell'>" + issue.Resolved + "</td>";
+
+        markUp += "</tr>";
+
+        if (settings.ReworkTypes.indexOf(issue.Type) > -1)
+            $("#table-rework-summary tr:last").after(markUp);
+        else
+            $("#table-defect-summary tr:last").after(markUp);
+    }
+}
+
 function GetMonthCollection() {
     var monthCollection = [];
     var theDate = new Date();
-    
-    while (theDate >= new Date(2014, 12, 1, 0, 0, 0, 0)) {
+    var earliestPeriod = new Date(theDate.getFullYear() - 1, theDate.getMonth(), 1, 0, 0, 0);
+
+    while (theDate >= earliestPeriod) {
         var monthObject = new Object();
         monthObject.Description = GetMonthString(theDate);
         monthObject.ReworkItems = 0;
@@ -316,7 +462,20 @@ function GetMonthCollection() {
     return monthCollection;
 }
 
+function GetStringDateAsMonthText(dateString) {
+    if (dateString === undefined) return "n/a";
+
+    var yearString = dateString.substr(6, 4);
+    var monthString = dateString.substr(3, 2);
+    var monthInt = parseInt(monthString);
+    var months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+    return months[monthInt - 1] + " " + yearString;
+}
+
 function GetMonthString(theDate) {
+    if (theDate === undefined) return "n/a";
+
     var months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
     var theMonth = theDate.getMonth();
     var theYear = theDate.getFullYear();
@@ -324,12 +483,90 @@ function GetMonthString(theDate) {
     return months[theMonth] + " " + theYear;
 }
 
-function SetRefresh(refreshUrl, screenDuration) {
-    var navigationParameter = getURLParameter("DoNavigation");
-    if (navigationParameter != null && navigationParameter === "Yes")
-        window.setTimeout(function () { window.location.replace(refreshUrl); }, screenDuration);
+function GetMonthTextQueryString(monthText) {
+    var month = monthText.split(' ')[0];
+    var year = monthText.split(' ')[1];
+
+    var queryText = "";
+    switch (month) {
+        case "January":
+            queryText = year + "-01";
+            break;
+        case "February":
+            queryText = year + "-02";
+            break;
+        case "March":
+            queryText = year + "-03";
+            break;
+        case "April":
+            queryText = year + "-04";
+            break;
+        case "May":
+            queryText = year + "-05";
+            break;
+        case "June":
+            queryText = year + "-06";
+            break;
+        case "July":
+            queryText = year + "-07";
+            break;
+        case "August":
+            queryText = year + "-08";
+            break;
+        case "September":
+            queryText = year + "-09";
+            break;
+        case "October":
+            queryText = year + "-10";
+            break;
+        case "November":
+            queryText = year + "-11";
+            break;
+        case "December":
+            queryText = year + "-12";
+            break;
+    }
+
+    return queryText;
 }
 
-function getURLParameter(name) {
-    return decodeURIComponent((new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.search) || [, ""])[1].replace(/\+/g, '%20')) || null
+function GetTypesFilter(settings) {
+    var queryText = "Type%3A"
+    var doneFirst = false;
+    var defectText = "";
+    for (var defectLocation in settings.DefectTypes) {
+        defectText = settings.DefectTypes[defectLocation];
+        defectText = defectText.split(' ').join('+');
+        if (doneFirst)
+            queryText += "%2C+";
+        queryText += "%7B" + defectText + "%7D";
+
+        doneFirst = true;
+    }
+
+    for (var reworkLocation in settings.ReworkTypes) {
+        defectText = settings.ReworkTypes[reworkLocation];
+        defectText = defectText.split(' ').join('+');
+        if (doneFirst)
+            queryText += "%2C+";
+        queryText += "%7B" + defectText + "%7D";
+
+        doneFirst = true;
+    }
+
+    return queryText;
+}
+
+function GetProjectsFilter(settings) {
+    var queryText = "project%3A";
+    doneFirst = false;
+    for (var projectLocation in settings.Projects) {
+        if (doneFirst)
+            queryText += "%2C+";
+        queryText += settings.Projects[projectLocation];
+
+        doneFirst = true;
+    }
+
+    return queryText;
 }
