@@ -3,10 +3,9 @@
     GetYouTrackData();
 });
 
-function DrawChart(idealProgress, workingProgress, doneProgress)
+function DrawChart(dates, idealProgress, workingProgress, doneProgress)
 {
 	var today = GetToday();
-	var dates = ["28/09/2015","29/09/2015","30/09/2015","01/10/2015","02/10/2015","05/10/2015","06/10/2015","07/10/2015","08/10/2015","09/10/2015","12/10/2015","13/10/2015","14/10/2015","15/10/2015","16/10/2015","19/10/2015","20/10/2015","21/10/2015","22/10/2015"];
 	var fromLoc = 0;
 	var toLoc = 0.5;
 	var foundDatePosition = false;
@@ -29,7 +28,7 @@ function DrawChart(idealProgress, workingProgress, doneProgress)
 	
 	$('#container').highcharts({
 		title: {
-            text: 'Payroll Burndown - 28th September - 23rd October 2015',
+            text: 'Payroll Burndown - 11th November - 19th November 2015',
             x: -20, //center,
 			style: {
                 fontWeight: 'bold',
@@ -71,7 +70,7 @@ function DrawChart(idealProgress, workingProgress, doneProgress)
 function GetYouTrackData()
 {
 	$.ajax({
-        url: "http://youtrack:9111/rest/issue/byproject/CAS?filter=Sprint%3A+%7BPayroll+1%7D+Type%3A+Defect+%2C+Task+%2C+%7BTesting+Task%7D+%2C+%7BProduct+Owner+Review%7D+%2C+Merge+order+by%3A+updated+desc&max=200",
+        url: "http://youtrack:9111/rest/issue/byproject/CAS?filter=Sprint%3A+%7BPayroll+3%7D+Type%3A+Task%2C+%7BTesting+Task%7D%2C+%7BProduct+Owner+Review%7D%2C+Merge%2C+%7BRework+Task%7D+order+by%3A+updated+desc&max=200",
         dataType: "json",
         headers: {
             accept: 'application/json'
@@ -84,12 +83,13 @@ function GetYouTrackData()
 
 function AnalyseYouTrackData(jsonData)
 {
-	var totalEstimate = 0;
-	var doneItems =       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-	var inProgressItems = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-	var doneProgress =    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-	var idealProgress =   [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-	var workingProgress = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    var totalEstimate = 0;
+    var dates = ["11/11/2015", "12/11/2015", "13/11/2015", "16/11/2015", "17/11/2015", "18/11/2015", "19/11/2015"];
+	var doneItems =       [0, 0, 0, 0, 0, 0, 0];
+	var inProgressItems = [0, 0, 0, 0, 0, 0, 0];
+	var doneProgress =    [0, 0, 0, 0, 0, 0, 0];
+	var idealProgress =   [0, 0, 0, 0, 0, 0, 0];
+	var workingProgress = [0, 0, 0, 0, 0, 0, 0];
 	
 	for (var taskLocation in jsonData)
 	{
@@ -133,62 +133,29 @@ function AnalyseYouTrackData(jsonData)
 		    doneDate = ShiftDateFromWeekendToWeekDay(doneDate);
 		if (isWorking)
 		    inProgressDate = ShiftDateFromWeekendToWeekDay(inProgressDate);
-		if (isDone && IsDateLessThan(doneDate, "28/09/2015"))
+		if (isDone && IsDateLessThan(doneDate, dates[0]))
 		    continue;
-		if (isWorking && IsDateLessThan(inProgressDate, "28/09/2015"))
-		    inProgressDate = "28/09/2015";
+		if (isWorking && IsDateLessThan(inProgressDate, dates[0]))
+		    inProgressDate = dates[0];
+
+		if (isDone && (doneDate === "14/11/2015" || doneDate === "15/11/2015"))
+            doneDate = "13/11/2015"
+		if (isWorking && (inProgressDate === "14/11/2015" || inProgressDate === "15/11/2015"))
+		    inProgressDate = "13/11/2015"
 
 		totalEstimate += estimate;
-		if (isDone && (doneDate != undefined))
-		{
-			if (doneDate == "28/09/2015") doneItems[0] += estimate;
-			if (doneDate == "29/09/2015") doneItems[1] += estimate;
-			if (doneDate == "30/09/2015") doneItems[2] += estimate;
-			if (doneDate == "01/10/2015") doneItems[3] += estimate;
-			if (doneDate == "02/10/2015") doneItems[4] += estimate;
-			if (doneDate == "05/10/2015") doneItems[5] += estimate;
-			if (doneDate == "06/10/2015") doneItems[6] += estimate;
-			if (doneDate == "07/10/2015") doneItems[7] += estimate;
-			if (doneDate == "08/10/2015") doneItems[8] += estimate;
-			if (doneDate == "09/10/2015") doneItems[9] += estimate;
-			if (doneDate == "12/10/2015") doneItems[10] += estimate;
-			if (doneDate == "13/10/2015") doneItems[11] += estimate;
-			if (doneDate == "14/10/2015") doneItems[12] += estimate;
-			if (doneDate == "15/10/2015") doneItems[13] += estimate;
-			if (doneDate == "16/10/2015") doneItems[14] += estimate;
-			if (doneDate == "19/10/2015") doneItems[15] += estimate;
-			if (doneDate == "20/10/2015") doneItems[16] += estimate;
-			if (doneDate == "21/10/2015") doneItems[17] += estimate;
-			if (doneDate == "22/10/2015") doneItems[18] += estimate;
-		}
-		
-		if (isWorking && (inProgressDate != undefined))
-		{
-			if (inProgressDate == "28/09/2015") inProgressItems[0] += estimate;
-			if (inProgressDate == "29/09/2015") inProgressItems[1] += estimate;
-			if (inProgressDate == "30/09/2015") inProgressItems[2] += estimate;
-			if (inProgressDate == "01/10/2015") inProgressItems[3] += estimate;
-			if (inProgressDate == "02/10/2015") inProgressItems[4] += estimate;
-			if (inProgressDate == "05/10/2015") inProgressItems[5] += estimate;
-			if (inProgressDate == "06/10/2015") inProgressItems[6] += estimate;
-			if (inProgressDate == "07/10/2015") inProgressItems[7] += estimate;
-			if (inProgressDate == "08/10/2015") inProgressItems[8] += estimate;
-			if (inProgressDate == "09/10/2015") inProgressItems[9] += estimate;
-			if (inProgressDate == "12/10/2015") inProgressItems[10] += estimate;
-			if (inProgressDate == "13/10/2015") inProgressItems[11] += estimate;
-			if (inProgressDate == "14/10/2015") inProgressItems[12] += estimate;
-			if (inProgressDate == "15/10/2015") inProgressItems[13] += estimate;
-			if (inProgressDate == "16/10/2015") inProgressItems[14] += estimate;
-			if (inProgressDate == "19/10/2015") inProgressItems[15] += estimate;
-			if (inProgressDate == "20/10/2015") inProgressItems[16] += estimate;
-			if (inProgressDate == "21/10/2015") inProgressItems[17] += estimate;
-			if (inProgressDate == "22/10/2015") inProgressItems[18] += estimate;
+
+		for (var loop = 0; loop < dates.length; loop++) {
+		    if (isDone && doneDate === dates[loop])
+		        doneItems[loop] += estimate;
+		    if (isWorking && inProgressDate === dates[loop])
+		        inProgressItems[loop] += estimate;
 		}
 	}
 	
 	for (index = 0; index < doneProgress.length; index++)
 	{
-		idealProgress[index] = totalEstimate - (index * (totalEstimate / 18));
+		idealProgress[index] = totalEstimate - (index * (totalEstimate / (dates.length -1)));
 		doneProgress[index] = totalEstimate;
 		workingProgress[index] = totalEstimate;
 		for (doneIndex = 0; doneIndex <= index; doneIndex++)
@@ -198,7 +165,7 @@ function AnalyseYouTrackData(jsonData)
 		}
 	}
 	
-	DrawChart(idealProgress, workingProgress, doneProgress);
+	DrawChart(dates, idealProgress, workingProgress, doneProgress);
 }
 
 function ConvertYouTrackDate(milliseconds) {

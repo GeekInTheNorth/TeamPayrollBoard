@@ -9,6 +9,7 @@ $(document).ready(function () {
 
 function ShowDefectSummary() {
     $("body").empty();
+    SetHeader();
 
     $.ajax({
         type: "Get",
@@ -30,11 +31,13 @@ function LoadSettings(jsonData)
     settings = new Object();
     settings.ScreenDuration = 0;
     settings.NextScreenUrl = undefined;
-    settings.YouTrackApiUrl = undefined;
-    settings.YouTrackIssueUrl = undefined;
+    settings.YouTrackRootUrl = undefined;
     settings.ReworkTypes = [];
     settings.DefectTypes = [];
     settings.Projects = [];
+    settings.UserStoryTypes = [];
+    settings.Exclusions = [];
+
 
     for (var key in jsonData)
     {
@@ -42,10 +45,8 @@ function LoadSettings(jsonData)
             settings.ScreenDuration = parseInt(jsonData[key]);
         } else if (key === "NextScreenUrl") {
             settings.NextScreenUrl = jsonData[key];
-        } else if (key === "YouTrackApiUrl") {
-            settings.YouTrackApiUrl = jsonData[key];
-        } else if (key === "YouTrackIssueUrl") {
-            settings.YouTrackIssueUrl = jsonData[key];
+        } else if (key === "YouTrackRootUrl") {
+            settings.YouTrackRootUrl = jsonData[key];
         } else if (key === "ReworkTypes") {
             var reworkCollection = jsonData[key];
             for (var reworkIndex in reworkCollection) {
@@ -63,6 +64,28 @@ function LoadSettings(jsonData)
             for (var projectIndex in projectCollection) {
                 var projectName = projectCollection[projectIndex];
                 settings.Projects.push(projectName);
+            }
+        } else if (key === "UserStoryTypes") {
+            var userStoryTypeCollection = jsonData[key];
+            for (var userStoryIndex in userStoryTypeCollection) {
+                var userStoryType = userStoryTypeCollection[userStoryIndex];
+                settings.UserStoryTypes.push(userStoryType);
+            }
+        } else if (key === "Exclusions") {
+            var exclusionCollection = jsonData[key];
+            for (var exclusionIndex in exclusionCollection) {
+                var exclusionFieldCollection = exclusionCollection[exclusionIndex];
+                var exclusion = new Object();
+                exclusion.Field = undefined;
+                exclusion.Value = undefined;
+                for (var exclusionFieldKey in exclusionFieldCollection) {
+                    if (exclusionFieldKey === "Field")
+                        exclusion.Field = exclusionFieldCollection[exclusionFieldKey];
+                    if (exclusionFieldKey === "Value")
+                        exclusion.Value = exclusionFieldCollection[exclusionFieldKey];
+                }
+
+                settings.Exclusions.push(exclusion);
             }
         }
     }
@@ -82,9 +105,9 @@ function GetYouTrackData(settings) {
     for (var monthLocation in monthCollection) {
         var monthFilter = GetMonthTextQueryString(monthCollection[monthLocation].Description);
         var filterText = projectsFilter + "+" + typesFilter + "+created%3A+" + monthFilter + "+or+" + projectsFilter + "+" + typesFilter + "+resolved%3A+" + monthFilter;
-        filterText += "+order+by%3A+created+desc&with=Type&with=created&with=Sprint&with=State&with=resolved&with=summary&with=id&max=500";
+        filterText += "+order+by%3A+created+desc&with=Type&with=created&with=Sprint&with=State&with=resolved&with=summary&with=id&with=subsystem&max=500";
 
-        var queryText = settings.YouTrackApiUrl + filterText;
+        var queryText = settings.YouTrackRootUrl + "/rest/issue?filter=" + filterText;
 
         $.ajax({
             url: queryText,
@@ -114,7 +137,8 @@ function ConvertYouTrackDataToObjects(jsonData) {
         var state = undefined;
         var type = undefined;
         var title = undefined;
-        var issueId = task.id;
+        var subSystem = undefined;
+        var issueId = task.id;        
 
         if (issuedLogged.indexOf(issueId) > -1) continue;
 
@@ -146,6 +170,10 @@ function ConvertYouTrackDataToObjects(jsonData) {
             if (field.name === "summary") {
                 title = field.value;
             }
+
+            if (field.name === "Subsystem") {
+                subSystem = field.value[0];
+            }
         }
 
         var taskObject = new Object();
@@ -156,8 +184,22 @@ function ConvertYouTrackDataToObjects(jsonData) {
         taskObject.Resolved = resolved;
         taskObject.Title = title;
         taskObject.IssueId = issueId;
+        taskObject.Subsystem = subSystem;
+        taskObject.IsExcluded = false;
 
-        youTrackIssues.push(taskObject);
+        for (var exclusionIndex in settings.Exclusions) {
+            var exclusion = settings.Exclusions[exclusionIndex];
+
+            if ((exclusion.Field === "Sprint") && (exclusion.Value === taskObject.Sprint))
+                taskObject.IsExcluded = true;
+            if ((exclusion.Field === "Type") && (exclusion.Value === taskObject.Type))
+                taskObject.IsExcluded = true;
+            if ((exclusion.Field === "Subsystem") && (exclusion.Value === taskObject.Subsystem))
+                taskObject.IsExcluded = true;
+        }
+
+        if (taskObject.IsExcluded === false)
+            youTrackIssues.push(taskObject);
     }
 
     return youTrackIssues;
@@ -227,7 +269,7 @@ function AnalyzeReworksBySprint() {
             rowClass = "normal-row";
 
         var markUp = "<tr class='" + rowClass + "'>";
-        markUp += "<td class='text-cell'>" + reworkSummary.Sprint + "</td>";
+        markUp += "<td class='text-cell'><a href='#' onclick='javascript:DrilldownToSprintBreakdown(\"" + reworkSummary.Sprint + "\");'>" + reworkSummary.Sprint + "</a></td>";
         markUp += "<td class='numeric-cell'>" + reworkSummary.Items + "</td>";
         markUp += "</tr>";
         $("#table-rework-by-sprint tr:last").after(markUp);
@@ -270,23 +312,27 @@ function AnalyzeIssuesByMonth() {
             if (resolvedDescription === monthData[monthDataLocation].Description) {
                 if ($.inArray(task.Type, settings.DefectTypes) > -1)
                     monthData[monthDataLocation].DefectsFixed += 1;
+                if ($.inArray(task.Type, settings.UserStoryTypes) > -1)
+                    monthData[monthDataLocation].UserStoriesCompleted += 1;
             }
         }
     }
 
     $("body").append("<h1>Rework & Defects By Month</h1>");
-    $("body").append("<table id='table-rework-by-month'><tr><th class='text-cell'>Period</th><th class='numeric-cell'>Rework Items</th><th class='numeric-cell'>Defects Logged</th><th class='numeric-cell'>Defects Closed</th><th class='numeric-cell'>Net Defect Change</th></tr></table>");
+    $("body").append("<table id='table-rework-by-month'><tr><th class='text-cell'>Period</th><th class='numeric-cell'>User Stories Completed</th><th class='numeric-cell'>Rework Items</th><th class='numeric-cell'>Defects Logged</th><th class='numeric-cell'>Defects Closed</th><th class='numeric-cell'>Net Defect Change</th></tr></table>");
 
     var rowClass = "";
     var totalReworkItems = 0;
     var totalDefectsLogged = 0;
     var totalDefectsFixed = 0;
+    var totalUserStoriesCompleted = 0;
     var markUp = "";
     for (var monthDataLocation in monthData) {
         var monthSummary = monthData[monthDataLocation];
         totalReworkItems += monthSummary.ReworkItems;
         totalDefectsLogged += monthSummary.DefectsLogged;
         totalDefectsFixed += monthSummary.DefectsFixed;
+        totalUserStoriesCompleted += monthSummary.UserStoriesCompleted;
         
         if (rowClass === "normal-row")
             rowClass = "alternate-row";
@@ -295,6 +341,7 @@ function AnalyzeIssuesByMonth() {
 
         var markUp = "<tr class='" + rowClass + "'>";
         markUp += "<td class='text-cell'><a href='#' onclick='DrilldownToMonthBreakdown(\"" + monthSummary.Description + "\");'>" + monthSummary.Description + "</a></td>";
+        markUp += "<td class='numeric-cell'>" + monthSummary.UserStoriesCompleted + "</td>";
         markUp += "<td class='numeric-cell'>" + monthSummary.ReworkItems + "</td>";
         markUp += "<td class='numeric-cell'>" + monthSummary.DefectsLogged + "</td>";
         markUp += "<td class='numeric-cell'>" + monthSummary.DefectsFixed + "</td>";
@@ -310,6 +357,7 @@ function AnalyzeIssuesByMonth() {
 
     var markUp = "<tr class='" + rowClass + "'>";
     markUp += "<th class='text-cell'>Total</th>";
+    markUp += "<th class='numeric-cell'>" + totalUserStoriesCompleted + "</th>";
     markUp += "<th class='numeric-cell'>" + totalReworkItems + "</th>";
     markUp += "<th class='numeric-cell'>" + totalDefectsLogged + "</th>";
     markUp += "<th class='numeric-cell'>" + totalDefectsFixed + "</th>";
@@ -359,16 +407,135 @@ function getURLParameter(name) {
 }
 
 function DrilldownToMonthBreakdown(monthText) {
-    var defectRowClass = "";
-    var reworkRowClass = "";
-    var rowClass = "";
+    var userStoryRowNumber = 0;
     var defectRowNumber = 0;
     var reworkRowNumber = 0;
     var thisRowNumber = 0;
 
     $("body").empty();
+    SetHeader();
+    CreateBreakDownTitles(monthText);
 
-    var markUp = "<h1>Defects Breakdown for " + monthText + "</h1>";
+    for (var issueIndex = 0; issueIndex < youTrackIssues.length; issueIndex++) {
+        var issue = youTrackIssues[issueIndex];
+        var includeItem = (GetStringDateAsMonthText(issue.Created) === monthText) || (GetStringDateAsMonthText(issue.Resolved) === monthText);
+
+        if (!includeItem) continue;
+
+        if (settings.UserStoryTypes.indexOf(issue.Type) > -1)
+        {
+            if (issue.Resolved === undefined) continue;
+
+            userStoryRowNumber++;
+            thisRowNumber = userStoryRowNumber;
+        } else if (settings.ReworkTypes.indexOf(issue.Type) > -1) {
+            reworkRowNumber++;
+            thisRowNumber = reworkRowNumber;
+        } else {
+            defectRowNumber++;
+            thisRowNumber = defectRowNumber;
+        }
+
+        DrawBreakdownRowMarkup(thisRowNumber, issue.IssueId, issue.Type, issue.Title, issue.Created, issue.Resolved);
+    }
+
+    ShowRowColoursForBreakdowns();
+    HideEmptyBreakdowns();
+}
+
+function DrilldownToSprintBreakdown(sprintText) {
+    var userStoryRowNumber = 0;
+    var defectRowNumber = 0;
+    var reworkRowNumber = 0;
+    var thisRowNumber = 0;
+
+    $("body").empty();
+    SetHeader();
+    CreateBreakDownTitles(sprintText);
+
+    for (var issueIndex = 0; issueIndex < youTrackIssues.length; issueIndex++) {
+        var issue = youTrackIssues[issueIndex];
+
+        if (issue.Sprint != sprintText) continue;
+
+        if (settings.UserStoryTypes.indexOf(issue.Type) > -1) {
+            if (issue.Resolved === undefined) continue;
+
+            userStoryRowNumber++;
+            thisRowNumber = userStoryRowNumber;
+        } else if (settings.ReworkTypes.indexOf(issue.Type) > -1) {
+            reworkRowNumber++;
+            thisRowNumber = reworkRowNumber;
+        } else {
+            defectRowNumber++;
+            thisRowNumber = defectRowNumber;
+        }
+
+        DrawBreakdownRowMarkup(thisRowNumber, issue.IssueId, issue.Type, issue.Title, issue.Created, issue.Resolved);
+    }
+
+    ShowRowColoursForBreakdowns();
+    HideEmptyBreakdowns();
+}
+
+function DrawBreakdownRowMarkup(rowNumber, issueId, issueType, issueTitle, issueCreated, issueResolved) {
+    var markUp = "<tr>";
+    markUp += "<td class='numeric-cell'>" + rowNumber + "</td>";
+    markUp += "<td class='text-cell'><a href='" + settings.YouTrackRootUrl + "/issue/" + issueId + "' target='_blank'>" + issueId + "</a></td>";
+    markUp += "<td class='text-cell'>" + issueType + "</td>";
+    markUp += "<td class='text-cell'>" + issueTitle + "</td>";
+    markUp += "<td class='numeric-cell'>" + issueCreated + "</td>";
+
+    if (issueResolved === undefined)
+        markUp += "<td class='numeric-cell'>&nbsp;</td>";
+    else
+        markUp += "<td class='numeric-cell'>" + issueResolved + "</td>";
+
+    markUp += "</tr>";
+
+    if (settings.UserStoryTypes.indexOf(issueType) > -1)
+        $("#table-user-story-completed tr:last").after(markUp);
+    else if (settings.ReworkTypes.indexOf(issueType) > -1)
+        $("#table-rework-summary tr:last").after(markUp);
+    else
+        $("#table-defect-summary tr:last").after(markUp);
+}
+
+function HideEmptyBreakdowns() {
+    if ($('#table-user-story-completed tr').length === 1) {
+        $("#header-user-story-completed").remove();
+        $("#table-user-story-completed").remove();
+    }
+    if ($('#table-defect-summary tr').length === 1) {
+        $("#header-defect-summary").remove();
+        $("#table-defect-summary").remove();
+    }
+    if ($('#table-rework-summary tr').length === 1) {
+        $("#header-rework-summary").remove();
+        $("#table-rework-summary").remove();
+    }
+}
+
+function ShowRowColoursForBreakdowns() {
+    $("table#table-user-story-completed tr:even").addClass("alternate-row");
+    $("table#table-user-story-completed tr:odd").addClass("normal-row");
+    $("table#table-defect-summary tr:even").addClass("alternate-row");
+    $("table#table-defect-summary tr:odd").addClass("normal-row");
+    $("table#table-rework-summary tr:even").addClass("alternate-row");
+    $("table#table-rework-summary tr:odd").addClass("normal-row");
+}
+
+function CreateBreakDownTitles(periodText) {
+    var markUp = "<h1 id='header-user-story-completed'>User Stories Completed In " + periodText + "</h1>";
+    markUp += "<table id='table-user-story-completed'>";
+    markUp += "<th class='text-cell'>#</th>"
+    markUp += "<th class='text-cell'>Issue Id</th>";
+    markUp += "<th class='text-cell'>Type</th>";
+    markUp += "<th class='text-cell'>Title</th>";
+    markUp += "<th class='numeric-cell'>Logged</th>";
+    markUp += "<th class='numeric-cell'>Fixed</th>";
+    markUp += "</tr></table>";
+    markUp += "<h1 id='header-defect-summary'>Defects Breakdown for " + periodText + "</h1>";
     markUp += "<table id='table-defect-summary'>";
     markUp += "<th class='text-cell'>#</th>"
     markUp += "<th class='text-cell'>Issue Id</th>";
@@ -377,7 +544,7 @@ function DrilldownToMonthBreakdown(monthText) {
     markUp += "<th class='numeric-cell'>Logged</th>";
     markUp += "<th class='numeric-cell'>Fixed</th>";
     markUp += "</tr></table>";
-    markUp += "<h1>Rework Breakdown for " + monthText + "</h1>";
+    markUp += "<h1 id='header-rework-summary'>Rework Breakdown for " + periodText + "</h1>";
     markUp += "<table id='table-rework-summary'>";
     markUp += "<th class='text-cell'>#</th>"
     markUp += "<th class='text-cell'>Issue Id</th>";
@@ -388,50 +555,6 @@ function DrilldownToMonthBreakdown(monthText) {
     markUp += "</tr></table>";
 
     $("body").append(markUp);
-
-    for (var issueIndex = 0; issueIndex < youTrackIssues.length; issueIndex++) {
-        var issue = youTrackIssues[issueIndex];
-        var includeItem = (GetStringDateAsMonthText(issue.Created) === monthText) || (GetStringDateAsMonthText(issue.Resolved) === monthText);
-
-        if (!includeItem) continue;
-
-        if (settings.ReworkTypes.indexOf(issue.Type) > -1) {
-            if (reworkRowClass === "normal-row")
-                reworkRowClass = "alternate-row";
-            else
-                reworkRowClass = "normal-row";
-            rowClass = reworkRowClass;
-            reworkRowNumber++;
-            thisRowNumber = reworkRowNumber;
-        } else {
-            if (defectRowClass === "normal-row")
-                defectRowClass = "alternate-row";
-            else
-                defectRowClass = "normal-row";
-            rowClass = defectRowClass;
-            defectRowNumber++;
-            thisRowNumber = defectRowNumber;
-        }
-
-        markUp = "<tr class='" + rowClass + "'>";
-        markUp += "<td class='numeric-cell'>" + thisRowNumber + "</td>";
-        markUp += "<td class='text-cell'><a href='" + settings.YouTrackIssueUrl + issue.IssueId + "' target='_blank'>" + issue.IssueId + "</a></td>";
-        markUp += "<td class='text-cell'>" + issue.Type + "</td>";
-        markUp += "<td class='text-cell'>" + issue.Title + "</td>";
-        markUp += "<td class='numeric-cell'>" + issue.Created + "</td>";
-
-        if (issue.Resolved === undefined)
-            markUp += "<td class='numeric-cell'>&nbsp;</td>";
-        else
-            markUp += "<td class='numeric-cell'>" + issue.Resolved + "</td>";
-
-        markUp += "</tr>";
-
-        if (settings.ReworkTypes.indexOf(issue.Type) > -1)
-            $("#table-rework-summary tr:last").after(markUp);
-        else
-            $("#table-defect-summary tr:last").after(markUp);
-    }
 }
 
 function GetMonthCollection() {
@@ -445,6 +568,7 @@ function GetMonthCollection() {
         monthObject.ReworkItems = 0;
         monthObject.DefectsLogged = 0;
         monthObject.DefectsFixed = 0;
+        monthObject.UserStoriesCompleted = 0;
         monthCollection.push(monthObject);
 
         var theMonth = theDate.getMonth();
@@ -554,6 +678,16 @@ function GetTypesFilter(settings) {
         doneFirst = true;
     }
 
+    for (var userStoryLocation in settings.UserStoryTypes) {
+        defectText = settings.UserStoryTypes[userStoryLocation];
+        defectText = defectText.split(' ').join('+');
+        if (doneFirst)
+            queryText += "%2C+";
+        queryText += "%7B" + defectText + "%7D";
+
+        doneFirst = true;
+    }
+
     return queryText;
 }
 
@@ -569,4 +703,23 @@ function GetProjectsFilter(settings) {
     }
 
     return queryText;
+}
+
+function SetHeader() {
+    var markUp = "<div class='header-bar'>";
+    markUp += "<a onclick='javascript:GoToHome();' class='Header-Command'>Home</a>";
+    markUp += "<a onclick='javascript:RefreshData();' class='Header-Command'>Refresh Data</a>";
+    markUp += "</div>";
+    $("body").append(markUp);
+}
+
+function GoToHome() {
+    $("body").empty();
+    SetHeader();
+    AnalyzeReworksBySprint();
+    AnalyzeIssuesByMonth();
+}
+
+function RefreshData() {
+    ShowDefectSummary();
 }

@@ -1,5 +1,5 @@
 ﻿body {
-    
+    font-family: Verdana, Tahoma, sans-serif;
 }
 
 table {
@@ -33,4 +33,21 @@ tr.normal-row {
 
 tr.alternate-row {
     background-color: lightsteelblue;
+}
+
+div.header-bar {
+    background-color: steelblue;
+    color: white;
+    font-weight: bold;
+    font-size: 1.5em;
+    margin-top: 0;
+    margin-left: 0;
+    margin-right: 0;
+    margin-bottom: 10px;
+    padding: 5px;
+}
+
+a.Header-Command {
+    margin-right: 20px;
+    cursor: pointer;
 }

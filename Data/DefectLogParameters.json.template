@@ -1,18 +1,38 @@
 ﻿{
-  "ScreenDuration": "30000",
-  "NextScreenUrl": "./YouTrackSummary.html",
-  "YouTrackApiUrl": "http://youtrack:9111/rest/issue/byproject/CAS?filter=",
-  "YouTrackIssueUrl": "http://youtrack:9111/issue/",
-  "ReworkTypes": [
-    "Rework Task"
+  "ScreenDuration": "60000",
+  "NextScreenUrl": "./YouTrackSummary.html?DisplayIndex=3",
+  "YouTrackRootUrl": "http://youtrack:9111",
+  "Projects": [
+    "CAS",
+    "PY",
+    "HR"
+  ],
+  "UserStoryTypes": [
+    "User Story"
   ],
   "DefectTypes": [
     "Bug",
     "Defect"
   ],
-  "Projects": [
-    "CAS",
-    "PY",
-    "HR"
+  "ReworkTypes": [
+    "Rework Task"
+  ],
+  "Exclusions": [
+    {
+      "Field": "Subsystem",
+      "Value": "UI"
+    },
+    {
+      "Field": "Sprint",
+      "Value": "UI 1"      
+    },
+    {
+      "Field": "Sprint",
+      "Value": "UI 2"
+    },
+    {
+      "Field": "Sprint",
+      "Value": "UI 3"
+    }
   ]
 }
