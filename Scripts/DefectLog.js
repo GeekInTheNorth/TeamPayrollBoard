@@ -99,13 +99,11 @@ function GetYouTrackData(settings) {
     var today = new Date();
     var firstMonth = new Date(today.getFullYear() - 1, today.getMonth(), 1, 0, 0, 0, 0);
     var monthCollection = GetMonthCollection();
-    var typesFilter = GetTypesFilter(settings);
-    var projectsFilter = GetProjectsFilter(settings);
     
     for (var monthLocation in monthCollection) {
         var monthFilter = GetMonthTextQueryString(monthCollection[monthLocation].Description);
-        var filterText = projectsFilter + "+" + typesFilter + "+created%3A+" + monthFilter + "+or+" + projectsFilter + "+" + typesFilter + "+resolved%3A+" + monthFilter;
-        filterText += "+order+by%3A+created+desc&with=Type&with=created&with=Sprint&with=State&with=resolved&with=summary&with=id&with=subsystem&max=500";
+        var filterText = "created%3A+" + monthFilter + "+or+resolved%3A+" + monthFilter;
+        filterText += "+order+by%3A+created+desc&with=Type&with=Project&with=created&with=Sprint&with=State&with=resolved&with=summary&with=id&with=subsystem&max=500";
 
         var queryText = settings.YouTrackRootUrl + "/rest/issue?filter=" + filterText;
 
@@ -138,7 +136,8 @@ function ConvertYouTrackDataToObjects(jsonData) {
         var type = undefined;
         var title = undefined;
         var subSystem = undefined;
-        var issueId = task.id;        
+        var issueId = task.id;
+        var validId = false;
 
         if (issuedLogged.indexOf(issueId) > -1) continue;
 
@@ -186,6 +185,22 @@ function ConvertYouTrackDataToObjects(jsonData) {
         taskObject.IssueId = issueId;
         taskObject.Subsystem = subSystem;
         taskObject.IsExcluded = false;
+
+        for (var projectIndex in settings.Projects)
+        {
+            var projectName = settings.Projects[projectIndex];
+            if (taskObject.IssueId.indexOf(projectName) > -1) {
+                validId = true
+            }
+        }
+
+        if (!validId)
+            continue;
+
+        if ((settings.UserStoryTypes.indexOf(taskObject.Type) === -1) &&
+            (settings.ReworkTypes.indexOf(taskObject.Type) === -1) &&
+            (settings.DefectTypes.indexOf(taskObject.Type) === -1))
+            continue;
 
         for (var exclusionIndex in settings.Exclusions) {
             var exclusion = settings.Exclusions[exclusionIndex];
@@ -412,13 +427,26 @@ function DrilldownToMonthBreakdown(monthText) {
     var reworkRowNumber = 0;
     var thisRowNumber = 0;
 
+    var previousMonthText = GetPreviousMonthText(monthText);
+
     $("body").empty();
     SetHeader();
-    CreateBreakDownTitles(monthText);
+    CreateBreakDownTitles(monthText, previousMonthText);
 
     for (var issueIndex = 0; issueIndex < youTrackIssues.length; issueIndex++) {
         var issue = youTrackIssues[issueIndex];
-        var includeItem = (GetStringDateAsMonthText(issue.Created) === monthText) || (GetStringDateAsMonthText(issue.Resolved) === monthText);
+
+        var includeItem = false;
+
+        if ((settings.UserStoryTypes.indexOf(issue.Type) > -1) && ((GetStringDateAsMonthText(issue.Resolved) === monthText) || (GetStringDateAsMonthText(issue.Resolved) === previousMonthText))) {
+            includeItem = true
+        }
+
+        if (((settings.ReworkTypes.indexOf(issue.Type) > -1) || (settings.DefectTypes.indexOf(issue.Type) > -1)) &&
+            ((GetStringDateAsMonthText(issue.Created) === monthText) || (GetStringDateAsMonthText(issue.Resolved) === monthText))) {
+            includeItem = true
+        }
+            
 
         if (!includeItem) continue;
 
@@ -436,7 +464,7 @@ function DrilldownToMonthBreakdown(monthText) {
             thisRowNumber = defectRowNumber;
         }
 
-        DrawBreakdownRowMarkup(thisRowNumber, issue.IssueId, issue.Type, issue.Title, issue.Created, issue.Resolved);
+        DrawBreakdownRowMarkup(thisRowNumber, issue.IssueId, issue.Type, issue.Subsystem, issue.Title, issue.Created, issue.Resolved, previousMonthText);
     }
 
     ShowRowColoursForBreakdowns();
@@ -451,7 +479,7 @@ function DrilldownToSprintBreakdown(sprintText) {
 
     $("body").empty();
     SetHeader();
-    CreateBreakDownTitles(sprintText);
+    CreateBreakDownTitles(sprintText, undefined);
 
     for (var issueIndex = 0; issueIndex < youTrackIssues.length; issueIndex++) {
         var issue = youTrackIssues[issueIndex];
@@ -471,19 +499,20 @@ function DrilldownToSprintBreakdown(sprintText) {
             thisRowNumber = defectRowNumber;
         }
 
-        DrawBreakdownRowMarkup(thisRowNumber, issue.IssueId, issue.Type, issue.Title, issue.Created, issue.Resolved);
+        DrawBreakdownRowMarkup(thisRowNumber, issue.IssueId, issue.Type, issue.Subsystem, issue.Title, issue.Created, issue.Resolved, undefined);
     }
 
     ShowRowColoursForBreakdowns();
     HideEmptyBreakdowns();
 }
 
-function DrawBreakdownRowMarkup(rowNumber, issueId, issueType, issueTitle, issueCreated, issueResolved) {
+function DrawBreakdownRowMarkup(rowNumber, issueId, issueType, issueSubsystem, issueTitle, issueCreated, issueResolved, previousMonthText) {
     var markUp = "<tr>";
     markUp += "<td class='numeric-cell'>" + rowNumber + "</td>";
     markUp += "<td class='text-cell'><a href='" + settings.YouTrackRootUrl + "/issue/" + issueId + "' target='_blank'>" + issueId + "</a></td>";
     markUp += "<td class='text-cell'>" + issueType + "</td>";
     markUp += "<td class='text-cell'>" + issueTitle + "</td>";
+    markUp += "<td class='text-cell'>" + issueSubsystem + "</td>";
     markUp += "<td class='numeric-cell'>" + issueCreated + "</td>";
 
     if (issueResolved === undefined)
@@ -493,8 +522,12 @@ function DrawBreakdownRowMarkup(rowNumber, issueId, issueType, issueTitle, issue
 
     markUp += "</tr>";
 
-    if (settings.UserStoryTypes.indexOf(issueType) > -1)
-        $("#table-user-story-completed tr:last").after(markUp);
+    if (settings.UserStoryTypes.indexOf(issueType) > -1) {
+        if ((previousMonthText != undefined) && (GetStringDateAsMonthText(issueResolved) === previousMonthText))
+            $("#table-user-story-completed-previously tr:last").after(markUp);
+        else
+            $("#table-user-story-completed tr:last").after(markUp);
+    }        
     else if (settings.ReworkTypes.indexOf(issueType) > -1)
         $("#table-rework-summary tr:last").after(markUp);
     else
@@ -506,10 +539,17 @@ function HideEmptyBreakdowns() {
         $("#header-user-story-completed").remove();
         $("#table-user-story-completed").remove();
     }
+
+    if ($('#table-user-story-completed-previously tr').length === 1) {
+        $("#header-user-story-completed-previously").remove();
+        $("#table-user-story-completed-previously").remove();
+    }    
+
     if ($('#table-defect-summary tr').length === 1) {
         $("#header-defect-summary").remove();
         $("#table-defect-summary").remove();
     }
+
     if ($('#table-rework-summary tr').length === 1) {
         $("#header-rework-summary").remove();
         $("#table-rework-summary").remove();
@@ -519,28 +559,46 @@ function HideEmptyBreakdowns() {
 function ShowRowColoursForBreakdowns() {
     $("table#table-user-story-completed tr:even").addClass("alternate-row");
     $("table#table-user-story-completed tr:odd").addClass("normal-row");
+    $("table#table-user-story-completed-previously tr:even").addClass("alternate-row");
+    $("table#table-user-story-completed-previously tr:odd").addClass("normal-row");
     $("table#table-defect-summary tr:even").addClass("alternate-row");
     $("table#table-defect-summary tr:odd").addClass("normal-row");
     $("table#table-rework-summary tr:even").addClass("alternate-row");
     $("table#table-rework-summary tr:odd").addClass("normal-row");
 }
 
-function CreateBreakDownTitles(periodText) {
+function CreateBreakDownTitles(periodText, previousPeriodText) {
     var markUp = "<h1 id='header-user-story-completed'>User Stories Completed In " + periodText + "</h1>";
     markUp += "<table id='table-user-story-completed'>";
     markUp += "<th class='text-cell'>#</th>"
     markUp += "<th class='text-cell'>Issue Id</th>";
     markUp += "<th class='text-cell'>Type</th>";
     markUp += "<th class='text-cell'>Title</th>";
+    markUp += "<th class='text-cell'>Module</th>";
     markUp += "<th class='numeric-cell'>Logged</th>";
     markUp += "<th class='numeric-cell'>Fixed</th>";
     markUp += "</tr></table>";
+
+    if ((previousPeriodText != undefined) && (previousPeriodText.length > 0)) {
+        markUp += "<h1 id='header-user-story-completed-previously'>User Stories Completed In " + previousPeriodText + "</h1>";
+        markUp += "<table id='table-user-story-completed-previously'>";
+        markUp += "<th class='text-cell'>#</th>"
+        markUp += "<th class='text-cell'>Issue Id</th>";
+        markUp += "<th class='text-cell'>Type</th>";
+        markUp += "<th class='text-cell'>Title</th>";
+        markUp += "<th class='text-cell'>Module</th>";
+        markUp += "<th class='numeric-cell'>Logged</th>";
+        markUp += "<th class='numeric-cell'>Fixed</th>";
+        markUp += "</tr></table>";
+    }
+
     markUp += "<h1 id='header-defect-summary'>Defects Breakdown for " + periodText + "</h1>";
     markUp += "<table id='table-defect-summary'>";
     markUp += "<th class='text-cell'>#</th>"
     markUp += "<th class='text-cell'>Issue Id</th>";
     markUp += "<th class='text-cell'>Type</th>";
     markUp += "<th class='text-cell'>Title</th>";
+    markUp += "<th class='text-cell'>Module</th>";
     markUp += "<th class='numeric-cell'>Logged</th>";
     markUp += "<th class='numeric-cell'>Fixed</th>";
     markUp += "</tr></table>";
@@ -550,6 +608,7 @@ function CreateBreakDownTitles(periodText) {
     markUp += "<th class='text-cell'>Issue Id</th>";
     markUp += "<th class='text-cell'>Type</th>";
     markUp += "<th class='text-cell'>Title</th>";
+    markUp += "<th class='text-cell'>Module</th>";
     markUp += "<th class='numeric-cell'>Logged</th>";
     markUp += "<th class='numeric-cell'>Fixed</th>";
     markUp += "</tr></table>";
@@ -652,6 +711,17 @@ function GetMonthTextQueryString(monthText) {
     }
 
     return queryText;
+}
+
+function GetPreviousMonthText(thisMonthText) {
+    var theDate = new Date((GetMonthTextQueryString(thisMonthText) + "-01"));
+    if (theDate.getMonth() == 0) {
+        theDate = new Date(theDate.getFullYear() - 1, 11, 1, 0, 0, 0, 0);
+    } else {
+        theDate = new Date(theDate.getFullYear(), theDate.getMonth() - 1, 1, 0, 0, 0, 0);
+    }
+
+    return GetMonthString(theDate);
 }
 
 function GetTypesFilter(settings) {
