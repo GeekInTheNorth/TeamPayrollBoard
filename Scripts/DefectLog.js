@@ -103,7 +103,7 @@ function GetYouTrackData(settings) {
     for (var monthLocation in monthCollection) {
         var monthFilter = GetMonthTextQueryString(monthCollection[monthLocation].Description);
         var filterText = "created%3A+" + monthFilter + "+or+resolved%3A+" + monthFilter;
-        filterText += "+order+by%3A+created+desc&with=Type&with=Project&with=created&with=Sprint&with=State&with=resolved&with=summary&with=id&with=subsystem&max=500";
+        filterText += "+order+by%3A+created+desc&with=Type&with=Project&with=created&with=Sprint&with=State&with=resolved&with=summary&with=id&with=subsystem&with=priority&max=500";
 
         var queryText = settings.YouTrackRootUrl + "/rest/issue?filter=" + filterText;
 
@@ -138,6 +138,7 @@ function ConvertYouTrackDataToObjects(jsonData) {
         var subSystem = undefined;
         var issueId = task.id;
         var validId = false;
+        var priority = "unknown";
 
         if (issuedLogged.indexOf(issueId) > -1) continue;
 
@@ -170,6 +171,10 @@ function ConvertYouTrackDataToObjects(jsonData) {
                 title = field.value;
             }
 
+            if (field.name === "Priority") {
+                priority = field.value[0];
+            }
+
             if (field.name === "Subsystem") {
                 subSystem = field.value[0];
             }
@@ -185,6 +190,7 @@ function ConvertYouTrackDataToObjects(jsonData) {
         taskObject.IssueId = issueId;
         taskObject.Subsystem = subSystem;
         taskObject.IsExcluded = false;
+        taskObject.Priority = priority;
 
         for (var projectIndex in settings.Projects)
         {
@@ -222,6 +228,7 @@ function ConvertYouTrackDataToObjects(jsonData) {
 
 function DisplaySummaryWhenReady() {
     if (apisCompleted === 13) {
+        youTrackIssues.sort(SortByDate);
         AnalyzeReworksBySprint();
         AnalyzeIssuesByMonth();
     }
@@ -267,6 +274,8 @@ function AnalyzeReworksBySprint() {
     }
 
     if (reworksBySprints.length === 0) return;
+
+    reworksBySprints = reworksBySprints.sort(CompareSprint);
 
     var markUp = "";
     var rowClass = "";
@@ -464,7 +473,7 @@ function DrilldownToMonthBreakdown(monthText) {
             thisRowNumber = defectRowNumber;
         }
 
-        DrawBreakdownRowMarkup(thisRowNumber, issue.IssueId, issue.Type, issue.Subsystem, issue.Title, issue.Created, issue.Resolved, previousMonthText);
+        DrawBreakdownRowMarkup(thisRowNumber, issue.IssueId, issue.Type, issue.Subsystem, issue.Title, issue.Created, issue.Resolved, issue.Priority, previousMonthText);
     }
 
     ShowRowColoursForBreakdowns();
@@ -499,14 +508,14 @@ function DrilldownToSprintBreakdown(sprintText) {
             thisRowNumber = defectRowNumber;
         }
 
-        DrawBreakdownRowMarkup(thisRowNumber, issue.IssueId, issue.Type, issue.Subsystem, issue.Title, issue.Created, issue.Resolved, undefined);
+        DrawBreakdownRowMarkup(thisRowNumber, issue.IssueId, issue.Type, issue.Subsystem, issue.Title, issue.Created, issue.Resolved, issue.Priority, undefined);
     }
 
     ShowRowColoursForBreakdowns();
     HideEmptyBreakdowns();
 }
 
-function DrawBreakdownRowMarkup(rowNumber, issueId, issueType, issueSubsystem, issueTitle, issueCreated, issueResolved, previousMonthText) {
+function DrawBreakdownRowMarkup(rowNumber, issueId, issueType, issueSubsystem, issueTitle, issueCreated, issueResolved, issuePriority, previousMonthText) {
     var markUp = "<tr>";
     markUp += "<td class='numeric-cell'>" + rowNumber + "</td>";
     markUp += "<td class='text-cell'><a href='" + settings.YouTrackRootUrl + "/issue/" + issueId + "' target='_blank'>" + issueId + "</a></td>";
@@ -514,12 +523,13 @@ function DrawBreakdownRowMarkup(rowNumber, issueId, issueType, issueSubsystem, i
     markUp += "<td class='text-cell'>" + issueTitle + "</td>";
     markUp += "<td class='text-cell'>" + issueSubsystem + "</td>";
     markUp += "<td class='numeric-cell'>" + issueCreated + "</td>";
-
+    
     if (issueResolved === undefined)
         markUp += "<td class='numeric-cell'>&nbsp;</td>";
     else
         markUp += "<td class='numeric-cell'>" + issueResolved + "</td>";
 
+    markUp += "<td class='text-cell'>" + issuePriority + "</td>";
     markUp += "</tr>";
 
     if (settings.UserStoryTypes.indexOf(issueType) > -1) {
@@ -576,7 +586,8 @@ function CreateBreakDownTitles(periodText, previousPeriodText) {
     markUp += "<th class='text-cell'>Title</th>";
     markUp += "<th class='text-cell'>Module</th>";
     markUp += "<th class='numeric-cell'>Logged</th>";
-    markUp += "<th class='numeric-cell'>Fixed</th>";
+    markUp += "<th class='numeric-cell'>Completed</th>";
+    markUp += "<th class='text-cell'>Priority</th>";
     markUp += "</tr></table>";
 
     if ((previousPeriodText != undefined) && (previousPeriodText.length > 0)) {
@@ -588,7 +599,8 @@ function CreateBreakDownTitles(periodText, previousPeriodText) {
         markUp += "<th class='text-cell'>Title</th>";
         markUp += "<th class='text-cell'>Module</th>";
         markUp += "<th class='numeric-cell'>Logged</th>";
-        markUp += "<th class='numeric-cell'>Fixed</th>";
+        markUp += "<th class='numeric-cell'>Completed</th>";
+        markUp += "<th class='text-cell'>Priority</th>";
         markUp += "</tr></table>";
     }
 
@@ -601,6 +613,7 @@ function CreateBreakDownTitles(periodText, previousPeriodText) {
     markUp += "<th class='text-cell'>Module</th>";
     markUp += "<th class='numeric-cell'>Logged</th>";
     markUp += "<th class='numeric-cell'>Fixed</th>";
+    markUp += "<th class='text-cell'>Severity</th>";
     markUp += "</tr></table>";
     markUp += "<h1 id='header-rework-summary'>Rework Breakdown for " + periodText + "</h1>";
     markUp += "<table id='table-rework-summary'>";
@@ -611,6 +624,7 @@ function CreateBreakDownTitles(periodText, previousPeriodText) {
     markUp += "<th class='text-cell'>Module</th>";
     markUp += "<th class='numeric-cell'>Logged</th>";
     markUp += "<th class='numeric-cell'>Fixed</th>";
+    markUp += "<th class='text-cell'>Severity</th>";
     markUp += "</tr></table>";
 
     $("body").append(markUp);
@@ -792,4 +806,76 @@ function GoToHome() {
 
 function RefreshData() {
     ShowDefectSummary();
+}
+
+function CompareSprint(a, b) {
+    var teamA = "";
+    var sprintNumberA = 0;
+    var teamB = "";
+    var sprintNumberB = 0;
+
+    if (a.Sprint != undefined) {
+        teamA = a.Sprint.split(' ')[0];;
+        sprintNumberA = parseInt(a.Sprint.split(' ')[1]);
+    }
+    if (b.Sprint != undefined) {
+        teamB = b.Sprint.split(' ')[0];
+        sprintNumberB = parseInt(b.Sprint.split(' ')[1]);
+    }
+
+    if (teamA < teamB)
+        return -1;
+    else if (teamA > teamB)
+        return 1;
+    else if (sprintNumberA > sprintNumberB)
+        return -1;
+    else (sprintNumberA < sprintNumberB)
+        return 1;
+    return 0;
+}
+
+function SortByDate(a, b) {
+    var severityA = 5;
+    var severityB = 5;
+    if (a.Priority === "Critical")
+        severityA = 1;
+    else if (a.Priority === "High")
+        severityA = 2;
+    else if (a.Priority === "Medium")
+        severityA = 3;
+    else if (a.Priority === "Low")
+        severityA = 4;
+    if (b.Priority === "Critical")
+        severityB = 1;
+    else if (b.Priority === "High")
+        severityB = 2;
+    else if (b.Priority === "Medium")
+        severityB = 3;
+    else if (b.Priority === "Low")
+        severityB = 4;
+
+    // Sort by severity first
+    if (severityA < severityB)
+        return -1;
+    else if (severityA > severityB)
+        return 1;
+
+    // Sort by Resolved, or created if neither have a Resolved value
+    if ((a.Resolved === undefined) && (b.Resolved === undefined)) {
+        if (a.Created < b.Created)
+            return 1;
+        else if (a.Created > b.Created)
+            return -1;
+        else
+            return 0;
+    } else if ((a.Resolved === undefined) && (b.Resolved != undefined))
+        return 1;
+    else if ((a.Resolved != undefined) && (b.Resolved === undefined))
+        return -1;
+    else if (a.Resolved < b.Resolved)
+        return 1;
+    else if (a.Resolved > b.Resolved)
+        return -1;
+    else
+        return 0;
 }

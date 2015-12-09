@@ -24,8 +24,11 @@ function CheckIssues() {
     {
         var codeText = codes[codeLocation].toUpperCase().trim();
         codeText = codeText.replace("UAT/CASCADE/", "");
+        codeText = codeText.replace("UAT/HR/", "");
+        codeText = codeText.replace("UAT/UI/", "");
+        codeText = codeText.replace("UAT/3RDLINE/", "");
 
-        if (codeText.startsWith("CAS-"))
+        if (codeText.startsWith("CAS-") || codeText.startsWith("HR-") || codeText.startsWith("PY-"))
         {
             requestsMade++;
             RequestData(codeText);
@@ -119,6 +122,7 @@ function ConvertYouTrackDataToObjects(jsonData) {
 }
 
 function DisplayData() {
+    youTrackIssues.sort(CompareYouTrackId);
     var markUp = "<table id='table-issue-results'>"
     markUp += "<tr>";
     markUp += "<th class='numeric-cell'>ID</th>";
@@ -156,4 +160,63 @@ function DisplaySummaryWhenReady() {
     else {
         setTimeout(function () { DisplaySummaryWhenReady() }, 1000);
     }
+}
+
+function RemoveInProgress() {
+    var rowIds = [];
+
+    //run through each row
+    $('#table-issue-results tr').each(function (i, row) {
+        var issueType = row.children[1].innerText;
+        var issueState = row.children[4].innerText;
+
+        if (((issueType === "Bug") && (issueState === "Done")) || (issueState.startsWith("In Progress")) || (issueState === "Ready to Start") || (issueState === "Designing") || (issueState === "Submitted"))
+            rowIds.push(i);
+    });
+
+    rowIds.sort(CompareRowIndexs);
+
+    var table = $('#table-issue-results');
+    for (var loop in rowIds)
+    {
+        var idToRemove = parseInt(rowIds[loop]);
+
+        $("#table-issue-results tr").eq(idToRemove).remove();
+    }
+
+    $("table#table-issue-results tr").removeClass("alternate-row");
+    $("table#table-issue-results tr").removeClass("normal-row");
+    $("table#table-issue-results tr:even").addClass("alternate-row");
+    $("table#table-issue-results tr:odd").addClass("normal-row");
+}
+
+function CompareRowIndexs(a, b) {
+    var indexA = parseInt(a);
+    var indexB = parseInt(b);
+
+    if (indexA > indexB)
+        return -1;
+    else if (indexA < indexB)
+        return 1;
+    else
+        return 0;
+}
+
+function CompareYouTrackId(a, b) {
+    var itemAProject = a.IssueId.split('-')[0];
+    var itemANumber = parseInt(a.IssueId.split('-')[1]);
+
+    var itemBProject = b.IssueId.split('-')[0];
+    var itemBNumber = parseInt(b.IssueId.split('-')[1]);
+
+    if (itemAProject > itemBProject)
+        return 1;
+    else if (itemAProject < itemBProject)
+        return -1;
+    else if (itemANumber > itemBNumber)
+        return 1
+    else if (itemANumber < itemBNumber)
+        return -1
+    else
+        return 0;
 }

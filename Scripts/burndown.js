@@ -28,7 +28,7 @@ function DrawChart(dates, idealProgress, workingProgress, doneProgress)
 	
 	$('#container').highcharts({
 		title: {
-            text: 'Payroll Burndown - 11th November - 19th November 2015',
+            text: 'Payroll Burndown - 7th December - 17th December 2015',
             x: -20, //center,
 			style: {
                 fontWeight: 'bold',
@@ -70,7 +70,7 @@ function DrawChart(dates, idealProgress, workingProgress, doneProgress)
 function GetYouTrackData()
 {
 	$.ajax({
-        url: "http://youtrack:9111/rest/issue/byproject/CAS?filter=Sprint%3A+%7BPayroll+3%7D+Type%3A+Task%2C+%7BTesting+Task%7D%2C+%7BProduct+Owner+Review%7D%2C+Merge%2C+%7BRework+Task%7D+order+by%3A+updated+desc&max=200",
+        url: "http://youtrack:9111/rest/issue/byproject/CAS?filter=Sprint%3A+%7BPayroll+5%7D+Type%3A+Task%2C+%7BTesting+Task%7D%2C+%7BProduct+Owner+Review%7D%2C+Merge%2C+%7BRework+Task%7D+order+by%3A+updated+desc&max=200",
         dataType: "json",
         headers: {
             accept: 'application/json'
@@ -84,12 +84,12 @@ function GetYouTrackData()
 function AnalyseYouTrackData(jsonData)
 {
     var totalEstimate = 0;
-    var dates = ["11/11/2015", "12/11/2015", "13/11/2015", "16/11/2015", "17/11/2015", "18/11/2015", "19/11/2015"];
-	var doneItems =       [0, 0, 0, 0, 0, 0, 0];
-	var inProgressItems = [0, 0, 0, 0, 0, 0, 0];
-	var doneProgress =    [0, 0, 0, 0, 0, 0, 0];
-	var idealProgress =   [0, 0, 0, 0, 0, 0, 0];
-	var workingProgress = [0, 0, 0, 0, 0, 0, 0];
+    var dates = ["07/12/2015", "08/12/2015", "09/12/2015", "10/12/2015", "11/12/2015", "14/12/2015", "15/12/2015", "16/12/2015", "17/12/2015"];
+	var doneItems =       [0, 0, 0, 0, 0, 0, 0, 0, 0];
+	var inProgressItems = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+	var doneProgress =    [0, 0, 0, 0, 0, 0, 0, 0, 0];
+	var idealProgress =   [0, 0, 0, 0, 0, 0, 0, 0, 0];
+	var workingProgress = [0, 0, 0, 0, 0, 0, 0, 0, 0];
 	
 	for (var taskLocation in jsonData)
 	{
@@ -99,7 +99,6 @@ function AnalyseYouTrackData(jsonData)
 		var estimate = 0;
 		var doneDate = undefined;
 		var inProgressDate = undefined;
-		var taskId = task.id;
 		var type = "";
 			
 		for (var fieldLocation in task.field)
@@ -138,10 +137,10 @@ function AnalyseYouTrackData(jsonData)
 		if (isWorking && IsDateLessThan(inProgressDate, dates[0]))
 		    inProgressDate = dates[0];
 
-		if (isDone && (doneDate === "14/11/2015" || doneDate === "15/11/2015"))
-            doneDate = "13/11/2015"
-		if (isWorking && (inProgressDate === "14/11/2015" || inProgressDate === "15/11/2015"))
-		    inProgressDate = "13/11/2015"
+		if (isDone && (doneDate === "12/12/2015" || doneDate === "13/12/2015"))
+            doneDate = "11/12/2015"
+		if (isWorking && (inProgressDate === "12/12/2015" || inProgressDate === "13/12/2015"))
+		    inProgressDate = "11/12/2015"
 
 		totalEstimate += estimate;
 
