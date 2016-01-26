@@ -1,0 +1,25 @@
+﻿ul.menu-container {
+    width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+ ul.menu-container li {
+     padding: 3px;
+     width: 100%;
+     margin: 1px;
+     border: 1px steelblue solid;
+     background-color: lightsteelblue;
+     text-align: center;
+     list-style-type: none;
+     cursor: pointer;
+     z-index: 1;
+ }
+
+ ul.menu-container li a {
+     color: black;
+     text-decoration: none;
+     cursor: pointer;
+     font-weight: bold;
+     z-index: 2;
+ }
