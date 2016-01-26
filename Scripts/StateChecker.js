@@ -138,7 +138,7 @@ function DisplayData() {
     for (var issueLocation in youTrackIssues) {
         var youTrackIssue = youTrackIssues[issueLocation];
         markUp = "<tr>";
-        markUp += "<td class='numeric-cell'>" + youTrackIssue.IssueId + "</td>";
+        markUp += "<td class='numeric-cell'><a href='http://youtrack:9111/issue/" + youTrackIssue.IssueId + "' target='_blank'>" + youTrackIssue.IssueId + "</a></td>";
         markUp += "<td class='text-cell'>" + youTrackIssue.Type + "</td>";
         markUp += "<td class='text-cell'>" + youTrackIssue.Subsystem + "</td>";
         markUp += "<td class='text-cell'>" + youTrackIssue.Title + "</td>";
