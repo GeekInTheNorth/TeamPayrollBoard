@@ -791,13 +791,14 @@ function GetProjectsFilter(settings) {
 
 function SetHeader() {
     var markUp = "<div class='header-bar'>";
-    markUp += "<a onclick='javascript:GoToHome();' class='Header-Command'>Home</a>";
-    markUp += "<a onclick='javascript:RefreshData();' class='Header-Command'>Refresh Data</a>";
+    markUp += "<a href='index.html' class='Header-Command'>Home</a>";
+    markUp += "<a href='#' onclick='javascript:ShowSummary();' class='Header-Command'>Summary</a>";
+    markUp += "<a href='#' onclick='javascript:RefreshData();' class='Header-Command'>Refresh Data</a>";
     markUp += "</div>";
     $("body").append(markUp);
 }
 
-function GoToHome() {
+function ShowSummary() {
     $("body").empty();
     SetHeader();
     AnalyzeReworksBySprint();

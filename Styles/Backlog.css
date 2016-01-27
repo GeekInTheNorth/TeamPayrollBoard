@@ -50,12 +50,13 @@ div.header-bar {
 a.Header-Command {
     margin-right: 20px;
     cursor: pointer;
+    color: white;
+    text-decoration:none;
 }
 
-img.chart-icon {
-    padding: 0;
-    margin: 0;
-    width: 32px;
-    height: 32px;
+a.backlog-command {
     cursor: pointer;
+    font-weight: bold;
+    color: cornflowerblue;
+    text-decoration:none;
 }
