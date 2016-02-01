@@ -102,10 +102,6 @@ function SetHeader() {
     $("body").append(markUp);
 }
 
-function RefreshData() {
-    ShowDefectSummary();
-}
-
 function ConvertYouTrackDataToObjects(jsonData, userName) {
     for (var taskLocation in jsonData.issue) {
         var task = jsonData.issue[taskLocation];
@@ -238,7 +234,7 @@ function DisplayDataByDeveloper() {
         var summaryItem = summaries[summaryIndex];
 
         var markUp = "<H1>" + summaryItem.FullName + "&nbsp;<a onclick='javascript:DisplayChart_Click(this);' data-username='" + summaryItem.UserName + "' data-fullname='" + summaryItem.FullName + "'><img src='Images/graph_icon.png' class='chart-icon'></img></a></H1>";
-        markUp += "<table class='table-developer-breakdown'>";
+        markUp += "<table class='datatable'>";
         markUp += "<tr><th class='text-cell'>Month</th><th class='numeric-cell'>Tasks</th><th class='numeric-cell'>Reworks</th><th class='numeric-cell'>Estimated (hrs/mth)</th><th class='numeric-cell'>Actual (hrs/mth)</th></tr>";
         
         for (var breakdownIndex in summaryItem.Breakdown) {
@@ -310,7 +306,13 @@ function DisplayDataAsChart(filterText, titleText) {
         chartData.series.push(seriesItem);
     }
 
-    var markUp = '<div id="container" style="min-width: 800px; height: 930px; margin: 0 auto"></div>';
+    var chartWidth = window.innerWidth - 20;
+    var chartHeight = window.innerHeight - 75;
+
+    if (chartWidth < 100) chartWidth = 100;
+    if (chartHeight < 100) chartHeight = 100;
+
+    var markUp = '<div id="container" style="min-width: ' + chartWidth + 'px; height: ' + chartHeight + 'px; margin: 0 auto"></div>';
     $("body").append(markUp);
 
     var jsonChartData = JSON.stringify(chartData);
@@ -328,7 +330,7 @@ function DisplayDataByTeam() {
         var summaryItem = summaries[summaryIndex];
 
         var markUp = "<H1>" + summaryItem.Team + "</H1>";
-        markUp += "<table class='table-developer-breakdown'>";
+        markUp += "<table class='datatable'>";
         markUp += "<tr><th class='text-cell'>Month</th><th class='numeric-cell'>Tasks</th><th class='numeric-cell'>Reworks</th><th class='numeric-cell'>Estimated (hrs/mth)</th><th class='numeric-cell'>Actual (hrs/mth)</th></tr>";
 
         for (var breakdownIndex in summaryItem.Breakdown) {
@@ -390,7 +392,13 @@ function DisplayDataAsTeamChart() {
         chartData.series.push(seriesItem);
     }
 
-    var markUp = '<div id="container" style="min-width: 800px; height: 930px; margin: 0 auto"></div>';
+    var chartWidth = window.innerWidth - 20;
+    var chartHeight = window.innerHeight - 75;
+
+    if (chartWidth < 100) chartWidth = 100;
+    if (chartHeight < 100) chartHeight = 100;
+
+    var markUp = '<div id="container" style="min-width: ' + chartWidth + 'px; height: ' + chartHeight + 'px; margin: 0 auto"></div>';
     $("body").append(markUp);
 
     var jsonChartData = JSON.stringify(chartData);
@@ -530,11 +538,6 @@ function SetRefresh() {
     var navigationParameter = getURLParameter("DoNavigation");
     if (navigationParameter != null && navigationParameter === "Yes")
         window.setTimeout(function () { window.location.replace(settings.NextScreenUrl); }, settings.ScreenDuration);
-}
-
-function ShowRowColoursForBreakdowns() {
-    $("table.table-developer-breakdown tr:even").addClass("alternate-row");
-    $("table.table-developer-breakdown tr:odd").addClass("normal-row");
 }
 
 function GetStartDate() {

@@ -232,11 +232,6 @@ function SetHeader() {
     $("body").append(markUp);
 }
 
-function ShowRowColoursForBreakdowns() {
-    $("table.datatable tr:even").addClass("alternate-row");
-    $("table.datatable tr:odd").addClass("normal-row");
-}
-
 function ShowTeamBreakdownFor(teamName, filterType) {
     $("body").empty();
     SetHeader();

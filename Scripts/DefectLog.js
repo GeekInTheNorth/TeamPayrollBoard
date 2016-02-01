@@ -8,9 +8,6 @@ $(document).ready(function () {
 });
 
 function ShowDefectSummary() {
-    $("body").empty();
-    SetHeader();
-
     $.ajax({
         type: "Get",
         url: "./Data/DefectLogParameters.json",
@@ -228,6 +225,8 @@ function ConvertYouTrackDataToObjects(jsonData) {
 
 function DisplaySummaryWhenReady() {
     if (apisCompleted === 13) {
+        $("body").empty();
+        SetHeader();
         youTrackIssues.sort(SortByDate);
         AnalyzeReworksBySprint();
         AnalyzeIssuesByMonth();
@@ -566,17 +565,6 @@ function HideEmptyBreakdowns() {
     }
 }
 
-function ShowRowColoursForBreakdowns() {
-    $("table#table-user-story-completed tr:even").addClass("alternate-row");
-    $("table#table-user-story-completed tr:odd").addClass("normal-row");
-    $("table#table-user-story-completed-previously tr:even").addClass("alternate-row");
-    $("table#table-user-story-completed-previously tr:odd").addClass("normal-row");
-    $("table#table-defect-summary tr:even").addClass("alternate-row");
-    $("table#table-defect-summary tr:odd").addClass("normal-row");
-    $("table#table-rework-summary tr:even").addClass("alternate-row");
-    $("table#table-rework-summary tr:odd").addClass("normal-row");
-}
-
 function CreateBreakDownTitles(periodText, previousPeriodText) {
     var markUp = "<h1 id='header-user-story-completed'>User Stories Completed In " + periodText + "</h1>";
     markUp += "<table id='table-user-story-completed' class='datatable'>";
@@ -657,27 +645,6 @@ function GetMonthCollection() {
     }
 
     return monthCollection;
-}
-
-function GetStringDateAsMonthText(dateString) {
-    if (dateString === undefined) return "n/a";
-
-    var yearString = dateString.substr(6, 4);
-    var monthString = dateString.substr(3, 2);
-    var monthInt = parseInt(monthString);
-    var months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-
-    return months[monthInt - 1] + " " + yearString;
-}
-
-function GetMonthString(theDate) {
-    if (theDate === undefined) return "n/a";
-
-    var months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-    var theMonth = theDate.getMonth();
-    var theYear = theDate.getFullYear();
-
-    return months[theMonth] + " " + theYear;
 }
 
 function GetMonthTextQueryString(monthText) {
@@ -803,10 +770,6 @@ function ShowSummary() {
     SetHeader();
     AnalyzeReworksBySprint();
     AnalyzeIssuesByMonth();
-}
-
-function RefreshData() {
-    ShowDefectSummary();
 }
 
 function CompareSprint(a, b) {

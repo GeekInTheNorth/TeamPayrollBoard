@@ -8,10 +8,6 @@ $(document).ready(function () {
     ShowBacklog();
 });
 
-function RefreshData() {
-    ShowBacklog();
-}
-
 function ShowBacklog() {
     $.ajax({
         type: "Get",
@@ -302,11 +298,6 @@ function CalculateAverage(totalEstimate, totalItems) {
     average = average * 100;
     average = Math.round(average);
     return average / 100;
-}
-
-function ShowRowColoursForBreakdowns() {
-    $("table.datatable tr:even").addClass("alternate-row");
-    $("table.datatable tr:odd").addClass("normal-row");
 }
 
 function GetTargetValue(tshirtSize) {

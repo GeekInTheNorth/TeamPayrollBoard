@@ -52,3 +52,12 @@ function ConvertYouTrackDate(milliseconds) {
 function getURLParameter(name) {
     return decodeURIComponent((new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.search) || [, ""])[1].replace(/\+/g, '%20')) || null
 }
+
+function RefreshData() {
+    location.reload();
+}
+
+function ShowRowColoursForBreakdowns() {
+    $("table.datatable tr:even").addClass("alternate-row");
+    $("table.datatable tr:odd").addClass("normal-row");
+}
