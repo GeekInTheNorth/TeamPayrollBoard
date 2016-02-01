@@ -56,12 +56,12 @@ function GetYouTrackData() {
 
     baseFilter += " State: ";
     var firstStateDone = false;
-    for (var stateIndex in settings.States) {
+    for (var stateIndex in settings.DesigningStates) {
         if (firstStateDone)
             baseFilter += ", ";
         else
             firstStateDone = true;
-        baseFilter += "{" + settings.States[stateIndex] + "}";
+        baseFilter += "{" + settings.DesigningStates[stateIndex] + "}";
     }
 
     for (var teamIndex in settings.Teams) {
@@ -173,7 +173,7 @@ function DisplaySummary() {
     $("body").empty();
     SetHeader();
 
-    var markUp = "<H1>Backlog Summary</H1><table class='table-team-breakdown'>";
+    var markUp = "<H1>Backlog Summary</H1><table class='datatable'>";
     markUp += "<tr><th class='text-cell'>Team</th><th class='numeric-cell'>Number of Items</th><th class='numeric-cell'>Requiring Tasking Out</th><th class='numeric-cell'>Tasked Out</th><th class='numeric-cell'>Requiring PO Review</th></tr>";
 
     for (var teamIndex in settings.Teams) {
@@ -183,6 +183,7 @@ function DisplaySummary() {
         var itemsReady = 0;
         var itemsNeedPOReview = 0;
         var itemsTaskedOut = 0;
+        var totalEstimate = 0;
 
         for (var youTrackIssueIndex in youTrackIssues) {
             var youTrackIssue = youTrackIssues[youTrackIssueIndex];
@@ -193,6 +194,8 @@ function DisplaySummary() {
             
             if (youTrackIssue.NeedsTestingTasks || youTrackIssue.NeedsDevTasks)
                 itemsNeedingTasks += 1;
+            else
+                totalEstimate += parseInt(youTrackIssue.Estimate);
 
             if (youTrackIssue.NeedsPOReview)
                 itemsNeedPOReview += 1;
@@ -204,7 +207,7 @@ function DisplaySummary() {
         markUp += "<td class='text-cell'>" + teamDetails.TeamName + "</td>";
         markUp += "<td class='numeric-cell'><a href='#' class='backlog-command' data-teamname='" + teamDetails.TeamName + "' data-filtertype='ALL'>" + itemsPending + "</a></td>";
         markUp += "<td class='numeric-cell'><a href='#' class='backlog-command' data-teamname='" + teamDetails.TeamName + "' data-filtertype='NeedsTasks'>" + itemsNeedingTasks + "</a></td>";
-        markUp += "<td class='numeric-cell'><a href='#' class='backlog-command' data-teamname='" + teamDetails.TeamName + "' data-filtertype='HasTasks'>" + itemsTaskedOut + "</a></td>";
+        markUp += "<td class='numeric-cell'><a href='#' class='backlog-command' data-teamname='" + teamDetails.TeamName + "' data-filtertype='HasTasks'>" + itemsTaskedOut + " (" + totalEstimate + " hours)</a></td>";
         markUp += "<td class='numeric-cell'><a href='#' class='backlog-command' data-teamname='" + teamDetails.TeamName + "' data-filtertype='NeedsPOReview'>" + itemsNeedPOReview + "</a></td>";
         markUp += "</tr>";
     }
@@ -223,15 +226,15 @@ function DisplaySummary() {
 function SetHeader() {
     var markUp = "<div class='header-bar'>";
     markUp += "<a href='index.html' class='Header-Command'>Home</a>";
-    markUp += "<a href='#' onclick='javascript:RefreshData();' class='Header-Command'>Refresh Data</a>";
     markUp += "<a href='#' onclick='javascript:DisplaySummary();' class='Header-Command'>Summary</a>";
+    markUp += "<a href='#' onclick='javascript:RefreshData();' class='Header-Command'>Refresh Data</a>";
     markUp += "</div>";
     $("body").append(markUp);
 }
 
 function ShowRowColoursForBreakdowns() {
-    $("table.table-team-breakdown tr:even").addClass("alternate-row");
-    $("table.table-team-breakdown tr:odd").addClass("normal-row");
+    $("table.datatable tr:even").addClass("alternate-row");
+    $("table.datatable tr:odd").addClass("normal-row");
 }
 
 function ShowTeamBreakdownFor(teamName, filterType) {
@@ -239,7 +242,7 @@ function ShowTeamBreakdownFor(teamName, filterType) {
     SetHeader();
 
     var markUp = "<H1>" + teamName + " Backlog Breakdown</H1>";
-    markUp += "<table class='table-team-breakdown'>";
+    markUp += "<table class='datatable'>";
     markUp += "<tr>";
     markUp += "<th class='text-cell'>Issue Id</th>";
     markUp += "<th class='text-cell'>Type</th>";

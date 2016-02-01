@@ -2,36 +2,35 @@
     font-family: Verdana, Tahoma, sans-serif;
 }
 
-table {
+table.datatable {
     border: none;
     border-collapse: collapse;
 }
 
-th {
+table.datatable th {
     background-color: steelblue;
     color: white;
     font-weight: bold;
 }
 
-.text-cell {
+table.datatable .text-cell {
     text-align: left;
 }
 
-.numeric-cell {
+table.datatable .numeric-cell {
     text-align: right;
 }
 
-.text-cell, .numeric-cell {
+table.datatable .text-cell, table.datatable .numeric-cell {
     border: solid 1px cornflowerblue;
     padding: 3px;
-
 }
 
-tr.normal-row {
+table.datatable tr.normal-row {
     background-color: white;
 }
 
-tr.alternate-row {
+table.datatable tr.alternate-row {
     background-color: lightsteelblue;
 }
 
@@ -54,9 +53,22 @@ a.Header-Command {
     text-decoration:none;
 }
 
+img.chart-icon {
+    padding: 0;
+    margin: 0;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+}
+
 a.backlog-command {
     cursor: pointer;
     font-weight: bold;
     color: cornflowerblue;
     text-decoration:none;
+}
+
+td.bad-cell {
+    background-color: red;
+    color: white;
 }

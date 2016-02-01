@@ -281,7 +281,7 @@ function AnalyzeReworksBySprint() {
     var rowClass = "";
     var totalItems = 0;
     $("body").append("<h1>Rework Items By Sprint</h1>");
-    $("body").append("<table id='table-rework-by-sprint'><tr><th class='text-cell'>Sprint</th><th class='numeric-cell'>Rework Items</th></tr></table>");
+    $("body").append("<table id='table-rework-by-sprint' class='datatable'><tr><th class='text-cell'>Sprint</th><th class='numeric-cell'>Rework Items</th></tr></table>");
     for (var reworkSummaryLocation in reworksBySprints)
     {
         var reworkSummary = reworksBySprints[reworkSummaryLocation];
@@ -343,7 +343,7 @@ function AnalyzeIssuesByMonth() {
     }
 
     $("body").append("<h1>Rework & Defects By Month</h1>");
-    $("body").append("<table id='table-rework-by-month'><tr><th class='text-cell'>Period</th><th class='numeric-cell'>User Stories Completed</th><th class='numeric-cell'>Rework Items</th><th class='numeric-cell'>Defects Logged</th><th class='numeric-cell'>Defects Closed</th><th class='numeric-cell'>Net Defect Change</th></tr></table>");
+    $("body").append("<table id='table-rework-by-month' class='datatable'><tr><th class='text-cell'>Period</th><th class='numeric-cell'>User Stories Completed</th><th class='numeric-cell'>Rework Items</th><th class='numeric-cell'>Defects Logged</th><th class='numeric-cell'>Defects Closed</th><th class='numeric-cell'>Net Defect Change</th></tr></table>");
 
     var rowClass = "";
     var totalReworkItems = 0;
@@ -579,7 +579,7 @@ function ShowRowColoursForBreakdowns() {
 
 function CreateBreakDownTitles(periodText, previousPeriodText) {
     var markUp = "<h1 id='header-user-story-completed'>User Stories Completed In " + periodText + "</h1>";
-    markUp += "<table id='table-user-story-completed'>";
+    markUp += "<table id='table-user-story-completed' class='datatable'>";
     markUp += "<th class='text-cell'>#</th>"
     markUp += "<th class='text-cell'>Issue Id</th>";
     markUp += "<th class='text-cell'>Type</th>";
@@ -592,7 +592,7 @@ function CreateBreakDownTitles(periodText, previousPeriodText) {
 
     if ((previousPeriodText != undefined) && (previousPeriodText.length > 0)) {
         markUp += "<h1 id='header-user-story-completed-previously'>User Stories Completed In " + previousPeriodText + "</h1>";
-        markUp += "<table id='table-user-story-completed-previously'>";
+        markUp += "<table id='table-user-story-completed-previously' class='datatable'>";
         markUp += "<th class='text-cell'>#</th>"
         markUp += "<th class='text-cell'>Issue Id</th>";
         markUp += "<th class='text-cell'>Type</th>";
@@ -605,7 +605,7 @@ function CreateBreakDownTitles(periodText, previousPeriodText) {
     }
 
     markUp += "<h1 id='header-defect-summary'>Defects Breakdown for " + periodText + "</h1>";
-    markUp += "<table id='table-defect-summary'>";
+    markUp += "<table id='table-defect-summary' class='datatable'>";
     markUp += "<th class='text-cell'>#</th>"
     markUp += "<th class='text-cell'>Issue Id</th>";
     markUp += "<th class='text-cell'>Type</th>";
@@ -616,7 +616,7 @@ function CreateBreakDownTitles(periodText, previousPeriodText) {
     markUp += "<th class='text-cell'>Severity</th>";
     markUp += "</tr></table>";
     markUp += "<h1 id='header-rework-summary'>Rework Breakdown for " + periodText + "</h1>";
-    markUp += "<table id='table-rework-summary'>";
+    markUp += "<table id='table-rework-summary' class='datatable'>";
     markUp += "<th class='text-cell'>#</th>"
     markUp += "<th class='text-cell'>Issue Id</th>";
     markUp += "<th class='text-cell'>Type</th>";

@@ -93,11 +93,11 @@ function CallYouTrackApi(apiUrl, devUserName) {
 function SetHeader() {
     var markUp = "<div class='header-bar'>";
     markUp += "<a href='index.html' class='Header-Command'>Home</a>";
-    markUp += "<a href='#' onclick='javascript:RefreshData();' class='Header-Command'>Refresh Data</a>";
     markUp += "<a href='#' onclick='javascript:DisplayDataByDeveloper();' class='Header-Command'>Dev Data</a>";
     markUp += "<a href='#' onclick='javascript:DisplayDataAsChartForAll();' class='Header-Command'>Dev Chart</a>";
     markUp += "<a href='#' onclick='javascript:DisplayDataByTeam();' class='Header-Command'>Team Data</a>";
     markUp += "<a href='#' onclick='javascript:DisplayDataAsTeamChart();' class='Header-Command'>Team Chart</a>";
+    markUp += "<a href='#' onclick='javascript:RefreshData();' class='Header-Command'>Refresh Data</a>";
     markUp += "</div>";
     $("body").append(markUp);
 }
