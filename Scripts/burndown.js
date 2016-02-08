@@ -3,8 +3,23 @@
     GetYouTrackData();
 });
 
+function CreateChartContainer() {
+    var chartWidth = window.innerWidth - 20;
+    var chartHeight = window.innerHeight - 20;
+
+    if (chartWidth < 100) chartWidth = 100;
+    if (chartHeight < 100) chartHeight = 100;
+
+    var markUp = '<div id="container" style="min-width: ' + chartWidth + 'px; height: ' + chartHeight + 'px; margin: 0 auto"></div>';
+
+    $("body").empty();
+    $("body").append(markUp);
+}
+
 function DrawChart(dates, idealProgress, workingProgress, doneProgress)
 {
+    CreateChartContainer();
+
 	var today = GetToday();
 	var fromLoc = 0;
 	var toLoc = 0.5;
@@ -84,7 +99,7 @@ function GetYouTrackData()
 function AnalyseYouTrackData(jsonData)
 {
     var totalEstimate = 0;
-    var dates = ["25/01/2016", "26/01/2016", "27/01/2016", "28/01/2016", "29/01/2016", "01/02/2016", "02/02/2016", "03/02/2016", "04/02/2016", "05/02/2016", "07/02/2016", "08/02/2016", "09/02/2016", "10/02/2016"];
+    var dates = ["25/01/2016", "26/01/2016", "27/01/2016", "28/01/2016", "29/01/2016", "01/02/2016", "02/02/2016", "03/02/2016", "04/02/2016", "05/02/2016", "08/02/2016", "09/02/2016", "10/02/2016", "11/02/2016"];
 	var doneItems =       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 	var inProgressItems = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 	var doneProgress =    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -228,8 +243,10 @@ function ShiftDateFromWeekendToWeekDay(dateToShift)
     var dateString = dateToShift.substr(6, 4) + "-" + dateToShift.substr(3, 2) + "-" + dateToShift.substr(0, 2);
     var date = new Date(dateString);
 
-    if (date.getDay() == 0) date = date + 1;
-    if (date.getDay() == 6) date = date + 2;
+    if (date.getDay() == 0)
+        date = date + 1;
+    else if (date.getDay() == 6)
+        date = date + 2;
 
     return DateToString(date);
 }
@@ -244,16 +261,17 @@ function SetRefresh() {
 
 function DateToString(theDate) {
     var displayString = "";
+    var dateToConvert = new Date(theDate);
 
-    if (theDate.getDate() < 10)
-        displayString = "0" + theDate.getDate() + "/";
+    if (dateToConvert.getDate() < 10)
+        displayString = "0" + dateToConvert.getDate() + "/";
     else
-        displayString = theDate.getDate() + "/";
+        displayString = dateToConvert.getDate() + "/";
 
-    if ((theDate.getMonth() + 1) < 10)
-        displayString = displayString + "0" + (theDate.getMonth() + 1) + "/" + theDate.getFullYear();
+    if ((dateToConvert.getMonth() + 1) < 10)
+        displayString = displayString + "0" + (dateToConvert.getMonth() + 1) + "/" + dateToConvert.getFullYear();
     else
-        displayString = displayString + (theDate.getMonth() + 1) + "/" + theDate.getFullYear();
+        displayString = displayString + (dateToConvert.getMonth() + 1) + "/" + dateToConvert.getFullYear();
 
     return displayString;
 }
