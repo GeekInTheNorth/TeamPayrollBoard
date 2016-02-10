@@ -1,4 +1,8 @@
-﻿$(document).ready(function () {
+﻿var sprintStart = new Date(2016, 0, 25, 0, 0, 0, 0);
+var sprintLength = 14;
+var sprintNumber = 7;
+
+$(document).ready(function () {
     SetRefresh();
     GetYouTrackData();
 });
@@ -24,6 +28,7 @@ function DrawChart(dates, idealProgress, workingProgress, doneProgress)
 	var fromLoc = 0;
 	var toLoc = 0.5;
 	var foundDatePosition = false;
+	var title = GetTitleForBoard(dates);
 	
 	for (index = 0; index < dates.length; index++)
 	{
@@ -43,7 +48,7 @@ function DrawChart(dates, idealProgress, workingProgress, doneProgress)
 	
 	$('#container').highcharts({
 		title: {
-		    text: 'Payroll Burndown - 25th January - 10th February 2016',
+		    text: title,
             x: -20, //center,
 			style: {
                 fontWeight: 'bold',
@@ -84,8 +89,11 @@ function DrawChart(dates, idealProgress, workingProgress, doneProgress)
 
 function GetYouTrackData()
 {
+    var team = GetTeamForBoard();
+    var url = "http://youtrack:9111/rest/issue/byproject/CAS?filter=Sprint%3A+%7B" + team + "+" + sprintNumber + "%7D+Type%3A+Task%2C+%7BTesting+Task%7D%2C+%7BProduct+Owner+Review%7D%2C+Merge%2C+%7BRework+Task%7D+order+by%3A+updated+desc&max=200";
+
 	$.ajax({
-        url: "http://youtrack:9111/rest/issue/byproject/CAS?filter=Sprint%3A+%7BPayroll+7%7D+Type%3A+Task%2C+%7BTesting+Task%7D%2C+%7BProduct+Owner+Review%7D%2C+Merge%2C+%7BRework+Task%7D+order+by%3A+updated+desc&max=200",
+	    url: url,
         dataType: "json",
         headers: {
             accept: 'application/json'
@@ -99,12 +107,12 @@ function GetYouTrackData()
 function AnalyseYouTrackData(jsonData)
 {
     var totalEstimate = 0;
-    var dates = ["25/01/2016", "26/01/2016", "27/01/2016", "28/01/2016", "29/01/2016", "01/02/2016", "02/02/2016", "03/02/2016", "04/02/2016", "05/02/2016", "08/02/2016", "09/02/2016", "10/02/2016", "11/02/2016"];
-	var doneItems =       [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-	var inProgressItems = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-	var doneProgress =    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-	var idealProgress =   [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-	var workingProgress = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    var dates = GetDatesForSprintAsStrings();
+    var doneItems = GetIntegerArray();
+    var inProgressItems = GetIntegerArray();
+    var doneProgress = GetIntegerArray();
+    var idealProgress = GetIntegerArray();
+    var workingProgress = GetIntegerArray();
 	
 	for (var taskLocation in jsonData)
 	{
@@ -151,15 +159,6 @@ function AnalyseYouTrackData(jsonData)
 		    continue;
 		if (isWorking && IsDateLessThan(inProgressDate, dates[0]))
 		    inProgressDate = dates[0];
-
-		if (isDone && (doneDate === "30/01/2016" || doneDate === "31/01/2016"))
-		    doneDate = "29/01/2016"
-		if (isDone && (doneDate === "06/02/2016" || doneDate === "07/02/2016"))
-		    doneDate = "05/02/2016"
-		if (isWorking && (inProgressDate === "30/01/2016" || inProgressDate === "31/01/2016"))
-		    inProgressDate = "29/01/2016"
-		if (isWorking && (inProgressDate === "06/02/2016" || inProgressDate === "07/02/2016"))
-		    inProgressDate = "05/02/2016"
 
 		totalEstimate += estimate;
 
@@ -274,4 +273,69 @@ function DateToString(theDate) {
         displayString = displayString + (dateToConvert.getMonth() + 1) + "/" + dateToConvert.getFullYear();
 
     return displayString;
+}
+
+function GetTeamForBoard() {
+    var team = getURLParameter("Team");
+
+    if ((team === null) || (team === undefined))
+        team = "Payroll";
+
+    return team;
+}
+
+function GetTitleForBoard(dates) {
+    var firstDate = dates[0];
+    var lastDate = dates[dates.length - 1];
+
+    var firstDay = parseInt(firstDate.substr(0, 2));
+    var firstMonth = GetStringDateAsMonthText(firstDate);
+    var lastDay = parseInt(lastDate.substr(0, 2));
+    var lastMonth = GetStringDateAsMonthText(lastDate);
+
+    var team = GetTeamForBoard();
+    var title = team + " Burndown - ";
+    title += firstDay + GetDaySuffix(firstDay) + " " + firstMonth;
+    title += " to ";
+    title += lastDay + GetDaySuffix(lastDay) + " " + lastMonth;
+
+    return title;
+}
+
+function GetDaySuffix(day) {
+    var stDays = [1, 21, 31];
+    var ndDays = [2, 22];
+
+    if (stDays.indexOf(day) >= 0)
+        return "st";
+    if (ndDays.indexOf(day) >= 0)
+        return "nd";
+    return "th";
+}
+
+function GetDatesForSprintAsStrings() {
+    var dates = [];
+    var loop = 0;
+
+    while (dates.length < sprintLength) {
+        var thisDate = new Date(sprintStart);
+        thisDate.setDate(thisDate.getDate() + loop);
+
+        if ((thisDate.getDay() !== 0) && (thisDate.getDay() !== 6))
+            dates.push(DateToString(thisDate));
+
+        loop = loop + 1;
+    }
+
+    return dates;
+}
+
+function GetIntegerArray() {
+    var arrayOfInts = [];
+
+    for (var loop = 0; loop < sprintLength; loop++) {
+        arrayOfInts.push(0);
+    }
+
+    return arrayOfInts;
 }
