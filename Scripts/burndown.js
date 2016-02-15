@@ -90,7 +90,7 @@ function DrawChart(dates, idealProgress, workingProgress, doneProgress)
 function GetYouTrackData()
 {
     var team = GetTeamForBoard();
-    var url = "http://172.27.74.34/rest/issue/byproject/CAS?filter=Sprint%3A+%7B" + team + "+" + sprintNumber + "%7D+Type%3A+Task%2C+%7BTesting+Task%7D%2C+%7BProduct+Owner+Review%7D%2C+Merge%2C+%7BRework+Task%7D+order+by%3A+updated+desc&max=200";
+    var url = "http://172.27.74.34:9111/rest/issue/byproject/CAS?filter=Sprint%3A+%7B" + team + "+" + sprintNumber + "%7D+Type%3A+Task%2C+%7BTesting+Task%7D%2C+%7BProduct+Owner+Review%7D%2C+Merge%2C+%7BRework+Task%7D+order+by%3A+updated+desc&max=200";
 
 	$.ajax({
 	    url: url,
