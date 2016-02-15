@@ -1,6 +1,6 @@
-﻿var sprintStart = new Date(2016, 0, 25, 0, 0, 0, 0);
+﻿var sprintStart = new Date(2016, 1, 15, 0, 0, 0, 0);
 var sprintLength = 14;
-var sprintNumber = 7;
+var sprintNumber = 8;
 
 $(document).ready(function () {
     SetRefresh();
@@ -90,7 +90,7 @@ function DrawChart(dates, idealProgress, workingProgress, doneProgress)
 function GetYouTrackData()
 {
     var team = GetTeamForBoard();
-    var url = "http://youtrack:9111/rest/issue/byproject/CAS?filter=Sprint%3A+%7B" + team + "+" + sprintNumber + "%7D+Type%3A+Task%2C+%7BTesting+Task%7D%2C+%7BProduct+Owner+Review%7D%2C+Merge%2C+%7BRework+Task%7D+order+by%3A+updated+desc&max=200";
+    var url = "http://172.27.74.34/rest/issue/byproject/CAS?filter=Sprint%3A+%7B" + team + "+" + sprintNumber + "%7D+Type%3A+Task%2C+%7BTesting+Task%7D%2C+%7BProduct+Owner+Review%7D%2C+Merge%2C+%7BRework+Task%7D+order+by%3A+updated+desc&max=200";
 
 	$.ajax({
 	    url: url,
@@ -185,24 +185,6 @@ function AnalyseYouTrackData(jsonData)
 	DrawChart(dates, idealProgress, workingProgress, doneProgress);
 }
 
-function ConvertYouTrackDate(milliseconds) {
-    var thisDate = new Date(0);
-    thisDate.setMilliseconds(milliseconds);
-
-    // YouTrack stores seconds, we need to convert this from a UTC datetime to a local datetime
-    // Previously we handled this by adding an hour which worked for our own location
-    var dateString = thisDate.toString();
-    if (dateString.indexOf("GMT") >= 0) {
-        dateString = dateString.substring(0, dateString.indexOf("GMT"));
-        dateString.trim();
-        dateString += "UTC";
-
-        thisDate = new Date(dateString);
-    }
-    
-    return DateToString(thisDate);
-}
-
 function GetToday()
 {
 	var today = new Date();
@@ -256,23 +238,6 @@ function SetRefresh() {
         setTimeout(function () { window.location.replace("YouTrackSummary.html?DisplayIndex=2"); }, 60000);
     else
         setTimeout(function () { window.location.reload(); }, 180000);
-}
-
-function DateToString(theDate) {
-    var displayString = "";
-    var dateToConvert = new Date(theDate);
-
-    if (dateToConvert.getDate() < 10)
-        displayString = "0" + dateToConvert.getDate() + "/";
-    else
-        displayString = dateToConvert.getDate() + "/";
-
-    if ((dateToConvert.getMonth() + 1) < 10)
-        displayString = displayString + "0" + (dateToConvert.getMonth() + 1) + "/" + dateToConvert.getFullYear();
-    else
-        displayString = displayString + (dateToConvert.getMonth() + 1) + "/" + dateToConvert.getFullYear();
-
-    return displayString;
 }
 
 function GetTeamForBoard() {

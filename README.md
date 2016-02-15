@@ -38,12 +38,12 @@ Edit the Configuration.json file and add an entry into Screens for set of inform
 		{
 			"DisplayName": "Team Payroll - Latest Items",
 			"DataType": "ItemList",
-			"Url": "http://youtrack:9111/rest/issue/byproject/PY?filter=project%3A+Payroll+State%3A+%7BDesigning%7D+..+%7BProduct+Owner+Review%7D+order+by%3A+updated+desc&max=6"
+			"Url": "http://YouTrackUrl/rest/issue/byproject/PY?filter=project%3A+Payroll+State%3A+%7BDesigning%7D+..+%7BProduct+Owner+Review%7D+order+by%3A+updated+desc&max=6"
 		},
 		{
 			"DisplayName": "Team Payroll - Development",
 			"DataType": "StateCounts",
-			"Url": "http://youtrack:9111/rest/issue/byproject/PY?filter=project%3A+Payroll+Payroll+Board%3A+5.3+State%3A+%7BDesigning%7D+..+%7BComplete%7D+Regression%3A+No+order+by%3A+updated+desc&max=100"
+			"Url": "http://YouTrackUrl/rest/issue/byproject/PY?filter=project%3A+Payroll+Payroll+Board%3A+5.3+State%3A+%7BDesigning%7D+..+%7BComplete%7D+Regression%3A+No+order+by%3A+updated+desc&max=100"
 		},
 		{
 			"DisplayName": "Upcoming Events",
@@ -102,7 +102,7 @@ The Defect Log has it's own configuration file, a template has been added to thi
 {
   "ScreenDuration": "60000",
   "NextScreenUrl": "./YouTrackSummary.html?DisplayIndex=3",
-  "YouTrackQueryUrl": "http://youtrack:9111/rest/issue/byproject/CAS?filter=project%3A+CAS+Type%3A+%7BRework+Task%7D+%2C+Bug+%2C+Defect+created%3A+2015-01+..+Today+or+project%3A+PY%2C+HR+Type%3A+Bug+created%3A+2015-01+..+Today+order+by%3A+created+desc&max=5000",
+  "YouTrackQueryUrl": "http://YouTrackUrl/rest/issue/byproject/CAS?filter=project%3A+CAS+Type%3A+%7BRework+Task%7D+%2C+Bug+%2C+Defect+created%3A+2015-01+..+Today+or+project%3A+PY%2C+HR+Type%3A+Bug+created%3A+2015-01+..+Today+order+by%3A+created+desc&max=5000",
   "ReworkTypes": [
     "Rework Task"
   ],
@@ -118,7 +118,7 @@ When adding the url for the Burndown Chart or the Defect Log to the Configuratio
 DONE
 ====
 
-last Updated 22/10/2015
+last Updated 15/02/2016
 
 * Display an error message when failing to connect to Youtrack
 * Show Summary Titles based on configured data
@@ -139,10 +139,6 @@ last Updated 22/10/2015
 * Implemented a Burndown Chart
 * Implemented a Defect Report
 * Added the ability to start the YouTrackSummary page from a certain index
-
-TODO
-====
-
-* Try and remove tables from count screens
-* Make the Burndown chart configurable
-* Style up the Defect Report to be more useful on an information radiator
+* Added the ability to track developer and team stats
+* Added the ability to track Estimation Accuracy
+* Added the ability to monitor the backlog

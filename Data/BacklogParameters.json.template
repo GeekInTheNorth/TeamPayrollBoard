@@ -1,0 +1,29 @@
+﻿{
+  "YouTrackRootUrl": "http://172.27.74.34",
+  "Projects": [
+    "CAS"
+  ],
+  "BacklogTypes": [
+    "User Story",
+    "Defect"
+  ],
+  "DesigningStates": [
+    "Submitted",
+    "Designing"
+  ],
+  "CompletedStates": [
+    "Complete",
+    "Released"
+  ],
+  "Teams": [
+    {
+      "TeamName": "Team 1",
+      "SubSystems": [ "SubSystem1", "SubSystem2" ]
+    },
+    {
+      "TeamName": "Team 2",
+      "SubSystems": [ "SubSystem3", "SubSystem4" ]
+    }
+  ],
+  "MergeAndPOReviewDuration": 1
+}

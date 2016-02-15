@@ -1,7 +1,7 @@
 ﻿{
   "ScreenDuration": "60000",
   "NextScreenUrl": "./YouTrackSummary.html?DisplayIndex=3",
-  "YouTrackRootUrl": "http://youtrack:9111",
+  "YouTrackRootUrl": "http://YouTrackUrl",
   "Projects": [
     "CAS",
     "PY",

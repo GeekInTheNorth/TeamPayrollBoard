@@ -40,7 +40,7 @@ function CheckIssues() {
 
 function RequestData(youTrackId)
 {
-    urlSearch = "http://youtrack:9111/rest/issue?filter=issue+id%3A+" + youTrackId + "&with=Type&with=Sprint&with=State&with=summary&with=id&with=subsystem";
+    urlSearch = "http://172.27.74.34/rest/issue?filter=issue+id%3A+" + youTrackId + "&with=Type&with=Sprint&with=State&with=summary&with=id&with=subsystem";
 
     $.ajax({
         url: urlSearch,
@@ -138,7 +138,7 @@ function DisplayData() {
     for (var issueLocation in youTrackIssues) {
         var youTrackIssue = youTrackIssues[issueLocation];
         markUp = "<tr>";
-        markUp += "<td class='numeric-cell'><a href='http://youtrack:9111/issue/" + youTrackIssue.IssueId + "' target='_blank'>" + youTrackIssue.IssueId + "</a></td>";
+        markUp += "<td class='numeric-cell'><a href='http://172.27.74.34/issue/" + youTrackIssue.IssueId + "' target='_blank'>" + youTrackIssue.IssueId + "</a></td>";
         markUp += "<td class='text-cell'>" + youTrackIssue.Type + "</td>";
         markUp += "<td class='text-cell'>" + youTrackIssue.Subsystem + "</td>";
         markUp += "<td class='text-cell'>" + youTrackIssue.Title + "</td>";

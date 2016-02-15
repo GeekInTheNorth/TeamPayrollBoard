@@ -34,17 +34,22 @@ function ConvertYouTrackDate(milliseconds) {
         thisDate = new Date(dateString);
     }
 
+    return DateToString(thisDate);
+}
+
+function DateToString(theDate) {
     var displayString = "";
+    var dateToConvert = new Date(theDate);
 
-    if (thisDate.getDate() < 10)
-        displayString = "0" + thisDate.getDate() + "/";
+    if (dateToConvert.getDate() < 10)
+        displayString = "0" + dateToConvert.getDate() + "/";
     else
-        displayString = thisDate.getDate() + "/";
+        displayString = dateToConvert.getDate() + "/";
 
-    if ((thisDate.getMonth() + 1) < 10)
-        displayString = displayString + "0" + (thisDate.getMonth() + 1) + "/" + thisDate.getFullYear();
+    if ((dateToConvert.getMonth() + 1) < 10)
+        displayString = displayString + "0" + (dateToConvert.getMonth() + 1) + "/" + dateToConvert.getFullYear();
     else
-        displayString = displayString + (thisDate.getMonth() + 1) + "/" + thisDate.getFullYear();
+        displayString = displayString + (dateToConvert.getMonth() + 1) + "/" + dateToConvert.getFullYear();
 
     return displayString;
 }

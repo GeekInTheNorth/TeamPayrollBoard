@@ -7,4 +7,5 @@ Events.json
 Configuration.json
 Messages.json
 DefectLogParameters.json
-DevLog.json
+DevLogParameters.json
+BacklogParameters.json
