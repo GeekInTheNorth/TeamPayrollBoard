@@ -730,6 +730,8 @@ function SetHeader() {
     var markUp = "<div class='header-bar'>";
     markUp += "<a href='index.html' class='Header-Command'>Home</a>";
     markUp += "<a href='#' onclick='javascript:ShowSummary();' class='Header-Command'>Summary</a>";
+    markUp += "<a href='#' onclick='javascript:ShowDefectList(true);' class='Header-Command'>Defect List</a>";
+    markUp += "<a href='#' onclick='javascript:ShowDefectList(false);' class='Header-Command'>Outstanding Defects</a>";
     markUp += "<a href='#' onclick='javascript:RefreshData();' class='Header-Command'>Refresh Data</a>";
     markUp += "</div>";
     $("body").append(markUp);
@@ -812,4 +814,46 @@ function SortByDate(a, b) {
         return -1;
     else
         return 0;
+}
+
+function ShowDefectList(includeResolved) {
+    $("body").empty();
+    SetHeader();
+
+    $("body").append("<h1>Defect List</h1>");
+    $("body").append("<table id='table-defect-log' class='datatable'><tr><th class='numeric-cell'>#</th><th class='numeric-cell'>Id</th><th class='text-cell'>Type</th><th class='text-cell'>Title</th><th class='text-cell'>Sub-System</th><th class='numeric-cell'>Created</th><th class='numeric-cell'>Resolved</th><th class='text-cell'>Priority</th></tr></table>");
+
+    var rowNumber = 1;
+
+    for (var issueIndex in youTrackIssues) {
+        var youTrackIssue = youTrackIssues[issueIndex];
+
+        if (settings.DefectTypes.indexOf(youTrackIssue.Type) === -1)
+            continue;
+
+        if ((youTrackIssue.Resolved !== undefined) && !includeResolved)
+            continue;
+
+        var markUp = "<tr>";
+        markUp += "<td class='numeric-cell'>" + rowNumber + "</td>";
+        markUp += "<td class='numeric-cell'><a href='" + settings.YouTrackRootUrl + "/issue/" + youTrackIssue.IssueId + "' target='_blank'>" + youTrackIssue.IssueId + "</a></td>";
+        markUp += "<td class='text-cell'>" + youTrackIssue.Type + "</td>";
+        markUp += "<td class='text-cell'>" + youTrackIssue.Title + "</td>";
+        markUp += "<td class='text-cell'>" + youTrackIssue.Subsystem + "</td>";
+        markUp += "<td class='numeric-cell'>" + youTrackIssue.Created + "</td>";
+
+        if (youTrackIssue.Resolved === undefined)
+            markUp += "<td class='numeric-cell'>&nbsp;</td>";
+        else
+            markUp += "<td class='numeric-cell'>" + youTrackIssue.Resolved + "</td>";
+
+        markUp += "<td class='text-cell'>" + youTrackIssue.Priority + "</td>";
+        markUp += "</tr>";
+
+        $("#table-defect-log tr:last").after(markUp);
+
+        rowNumber++;
+    }
+
+    ShowRowColoursForBreakdowns();
 }
