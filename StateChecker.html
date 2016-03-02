@@ -4,15 +4,16 @@
     <title></title>
 	<meta charset="utf-8" />
     <script src="Scripts/jquery-2.1.1.min.js"></script>
+    <script src="Scripts/General.js"></script>
     <script src="Scripts/StateChecker.js"></script>
-    <link href="Styles/DefectLog.css" rel="stylesheet" />
+    <link href="Styles/General.css" rel="stylesheet" />
 </head>
 <body>
     <div class='header-bar'><a href='index.html' class='Header-Command'>Home</a></div>
 
     <p>Enter You Track Ids of issues to check, either comma separate them or place them on new lines. Branch names specifically prefixed uat/cascade/ are also accepted.</p>
     <textarea rows="10" id="you-track-issues-to-check" style="width: 300px;"></textarea><br />
-    <a href="#" onclick="javascript: CheckIssues();">Check Issues</a>
+    <a href="#" onclick="javascript: StartIssueCheck();">Check Issues</a>
     &nbsp;
     <a href="#" onclick="javascript: RemoveInProgress();">Remove In Progress Items</a>
     <br />

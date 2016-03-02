@@ -15,7 +15,7 @@ function RefreshData() {
 function ShowBacklog() {
     $.ajax({
         type: "Get",
-        url: "./Data/BacklogParameters.json",
+        url: "./Data/SiteSettings.json",
         dataType: "json",
         headers: {
             accept: 'application/json'
@@ -34,38 +34,29 @@ function GetYouTrackData() {
     apiStarted = 0;
     apiCompleted = 0;
 
-    var baseFilter = "project: ";
-    var firstProjectDone = false;
-    for (var projectIndex in settings.Projects) {
-        if (firstProjectDone)
-            baseFilter += ", ";
-        else
-            firstProjectDone = true;
-        baseFilter += "{" + settings.Projects[projectIndex] + "}";
-    }
-
-    baseFilter += " Type: ";
-    var firstTaskTypeDone = false;
-    for (var taskIndex in settings.BacklogTypes) {
-        if (firstTaskTypeDone)
-            baseFilter += ", ";
-        else
-            firstTaskTypeDone = true;
-        baseFilter += "{" + settings.BacklogTypes[taskIndex] + "}";
-    }
-
-    baseFilter += " State: ";
-    var firstStateDone = false;
-    for (var stateIndex in settings.DesigningStates) {
-        if (firstStateDone)
-            baseFilter += ", ";
-        else
-            firstStateDone = true;
-        baseFilter += "{" + settings.DesigningStates[stateIndex] + "}";
-    }
-
     for (var teamIndex in settings.Teams) {
         var teamDetails = settings.Teams[teamIndex];
+
+        var baseFilter = "project: ";
+        for (var projectIndex in teamDetails.Projects) {
+            if (projectIndex > 0)
+                baseFilter += ", ";
+            baseFilter += "{" + teamDetails.Projects[projectIndex] + "}";
+        }
+
+        baseFilter += " Type: ";
+        for (var userStoryIndex in settings.UserStories) {
+            if (userStoryIndex > 0)
+                baseFilter += ", ";
+            baseFilter += "{" + settings.UserStories[userStoryIndex] + "}";
+        }
+
+        baseFilter += " State: ";
+        for (var stateIndex in settings.DesigningStates) {
+            if (stateIndex > 0)
+                baseFilter += ", ";
+            baseFilter += "{" + settings.DesigningStates[stateIndex] + "}";
+        }
 
         for (var subSystemIndex in teamDetails.SubSystems) {
             var filterText = baseFilter + " Subsystem: {" + teamDetails.SubSystems[subSystemIndex] + "}";
@@ -87,77 +78,13 @@ function CallYouTrackApi(apiUrl, teamName) {
             accept: 'application/json'
         },
         success: function (jsonData) {
-            ConvertYouTrackDataToObjects(jsonData, teamName);
+            ConvertYouTrackDataToObjects(jsonData, youTrackIssues, issuedLogged, teamName);
             apiCompleted += 1;
         },
         error: function () {
             apiCompleted += 1;
         }
     });
-}
-
-function ConvertYouTrackDataToObjects(jsonData, teamName) {
-    for (var taskLocation in jsonData.issue) {
-        var task = jsonData.issue[taskLocation];
-        var state = undefined;
-        var type = undefined;
-        var title = undefined;
-        var subSystem = undefined;
-        var issueId = task.id;
-        var estimate = 0;
-        var hasRequiresTaskingTag = false;
-        var hasRequiresTestingTag = false;
-        var hasRequiresPOReview = false;
-
-        if (issuedLogged.indexOf(issueId) > -1) continue;
-
-        issuedLogged.push(issueId);
-
-        for (var fieldLocation in task.field) {
-            var field = task.field[fieldLocation];
-
-            if (field.name === "Type") {
-                type = field.value[0];
-            }
-
-            if (field.name === "State") {
-                state = field.value[0];
-            }
-
-            if (field.name === "summary") {
-                title = field.value;
-            }
-
-            if (field.name === "Subsystem") {
-                subSystem = field.value[0];
-            }
-
-            if (field.name === "Estimate") {
-                estimate = field.value[0];
-            }
-        }
-
-        for (var tagIndex in task.tag) {
-            var tagValue = task.tag[tagIndex].value;
-            if (tagValue === "Needs Testing Tasks") hasRequiresTestingTag = true;
-            if (tagValue === "Req. PO Review") hasRequiresPOReview = true;
-            if (tagValue === "Needs Tasking Out") hasRequiresTaskingTag = true;
-        }
-
-        var taskObject = new Object();
-        taskObject.Type = type;
-        taskObject.State = state;
-        taskObject.Title = title;
-        taskObject.IssueId = issueId;
-        taskObject.Subsystem = subSystem;
-        taskObject.Team = teamName;
-        taskObject.Estimate = estimate;
-        taskObject.NeedsPOReview = hasRequiresPOReview;
-        taskObject.NeedsTestingTasks = hasRequiresTestingTag || hasRequiresTaskingTag || (estimate <= settings.MergeAndPOReviewDuration);
-        taskObject.NeedsDevTasks = hasRequiresTaskingTag || (estimate <= settings.MergeAndPOReviewDuration);
-
-        youTrackIssues.push(taskObject);
-    }
 }
 
 function DisplayDataWhenReady() {
@@ -240,8 +167,9 @@ function ShowTeamBreakdownFor(teamName, filterType) {
     markUp += "<table class='datatable'>";
     markUp += "<tr>";
     markUp += "<th class='text-cell'>Issue Id</th>";
-    markUp += "<th class='text-cell'>Type</th>";
     markUp += "<th class='text-cell'>Title</th>";
+    markUp += "<th class='text-cell'>Type</th>";
+    markUp += "<th class='text-cell'>Module</th>";
     markUp += "<th class='text-cell'>Needs Dev Tasks</th>";
     markUp += "<th class='text-cell'>Needs Testing Tasks</th>";
     markUp += "<th class='numeric-cell'>Estimate</th>";
@@ -257,8 +185,9 @@ function ShowTeamBreakdownFor(teamName, filterType) {
 
         markUp += "<tr>";
         markUp += "<td class='text-cell'><a href='" + settings.YouTrackRootUrl +"/issue/" + youTrackIssue.IssueId + "' target='_blank'>" + youTrackIssue.IssueId + "</a></td>";
-        markUp += "<td class='text-cell'>" + youTrackIssue.Type + "</td>";
         markUp += "<td class='text-cell'>" + youTrackIssue.Title + "</td>";
+        markUp += "<td class='text-cell'>" + youTrackIssue.Type + "</td>";
+        markUp += "<td class='text-cell'>" + youTrackIssue.Subsystem + "</td>";
         markUp += "<td class='text-cell'>" + BoolToString(youTrackIssue.NeedsDevTasks) + "</td>";
         markUp += "<td class='text-cell'>" + BoolToString(youTrackIssue.NeedsTestingTasks) + "</td>";
         markUp += "<td class='numeric-cell'>" + youTrackIssue.Estimate + "</td>";

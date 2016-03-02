@@ -11,14 +11,13 @@ $(document).ready(function () {
 function ShowDevLog() {
     $.ajax({
         type: "Get",
-        url: "./Data/DevLogParameters.json",
+        url: "./Data/SiteSettings.json",
         dataType: "json",
         headers: {
             accept: 'application/json'
         },
         success: function (jsonData) {
             settings = jsonData;
-            SetRefresh();
             GetYouTrackData();
         }
     });
@@ -30,25 +29,13 @@ function GetYouTrackData() {
     apiStarted = 0;
     apiCompleted = 0;
 
-    var baseFilter = "project: ";
-    var firstProjectDone = false;
-    for (var projectIndex in settings.Projects) {
-        if (firstProjectDone)
-            baseFilter += ", ";
-        else
-            firstProjectDone = true;
-        baseFilter += "{" + settings.Projects[projectIndex] + "}";
-    }
-
-    baseFilter += " Type: ";
+    var baseFilter = "Type: ";
 
     var firstTaskTypeDone = false;
-    for (var taskIndex in settings.TaskTypes) {
-        if (firstTaskTypeDone)
+    for (var taskIndex in settings.DevLogTasks) {
+        if (taskIndex > 0)
             baseFilter += ", ";
-        else
-            firstTaskTypeDone = true;
-        baseFilter += "{" + settings.TaskTypes[taskIndex] + "}";
+        baseFilter += "{" + settings.DevLogTasks[taskIndex] + "}";
     }
     
     var theDate = GetStartDate();
@@ -81,7 +68,7 @@ function CallYouTrackApi(apiUrl, devUserName) {
             accept: 'application/json'
         },
         success: function (jsonData) {
-            ConvertYouTrackDataToObjects(jsonData, devUserName);
+            ConvertYouTrackDataToObjects(jsonData, youTrackIssues, issuedLogged);
             apiCompleted += 1;
         },
         error: function () {
@@ -102,90 +89,12 @@ function SetHeader() {
     $("body").append(markUp);
 }
 
-function ConvertYouTrackDataToObjects(jsonData, userName) {
-    for (var taskLocation in jsonData.issue) {
-        var task = jsonData.issue[taskLocation];
-        var resolved = undefined;
-        var state = undefined;
-        var type = undefined;
-        var title = undefined;
-        var subSystem = undefined;
-        var issueId = task.id;
-        var developer = userName
-        var estimate = 0;
-        var actualTime = 0;
-        var sprint = undefined;
-        var team = undefined;
-
-        if (issuedLogged.indexOf(issueId) > -1) continue;
-
-        issuedLogged.push(issueId);
-
-        for (var fieldLocation in task.field) {
-            var field = task.field[fieldLocation];
-
-            if (field.name === "Type") {
-                type = field.value[0];
-            }
-
-            if (field.name === "State") {
-                state = field.value[0];
-            }
-
-            if (field.name === "DoneDate") {
-                resolved = ConvertYouTrackDate(field.value);
-            }
-
-            if (field.name === "summary") {
-                title = field.value;
-            }
-
-            if (field.name === "Subsystem") {
-                subSystem = field.value[0];
-            }
-
-            if (field.name === "Estimate") {
-                estimate = field.value[0];
-            }
-
-            if (field.name === "ActualTime") {
-                actualTime = field.value[0];
-            }
-
-            if (field.name === "Sprint") {
-                sprint = field.value[0];
-                team = sprint.split(" ")[0];
-            }
-        }
-
-        if ((actualTime === 0) && (estimate !== 0))
-            actualTime = estimate;
-
-        var taskObject = new Object();
-        taskObject.Type = type;
-        taskObject.State = state;
-        taskObject.Resolved = resolved;
-        taskObject.Title = title;
-        taskObject.IssueId = issueId;
-        taskObject.Subsystem = subSystem;
-        taskObject.DeveloperUserName = developer;
-        taskObject.Estimate = estimate;
-        taskObject.ActualTime = actualTime;
-        taskObject.Sprint = sprint;
-        taskObject.Team = team;
-
-        youTrackIssues.push(taskObject);
-    }
-
-    return youTrackIssues;
-}
-
 function DisplaySummaryWhenReady() {
     if (apiCompleted === apiStarted) {
         DisplayDataByDeveloper();
     }
     else {
-        setTimeout(function () { DisplaySummaryWhenReady(settings) }, 1000);
+        setTimeout(function () { DisplaySummaryWhenReady(); }, 1000);
     }
 }
 
@@ -447,12 +356,18 @@ function GetDevBreakdown(filterText) {
         for (var summaryIndex in summaries) {
             var summaryItem = summaries[summaryIndex];
 
-            if (summaryItem.UserName === youTrackIssue.DeveloperUserName) {
-                var youTrackIssueMonth = GetStringDateAsMonthText(youTrackIssue.Resolved);
+            if (summaryItem.FullName === youTrackIssue.Developer) {
+                var youTrackIssueMonth = GetStringDateAsMonthText(youTrackIssue.DoneDate);
                 for (var breakdownIndex in summaryItem.Breakdown) {
                     if (summaryItem.Breakdown[breakdownIndex].MonthLabel === youTrackIssueMonth) {
-                        summaryItem.Breakdown[breakdownIndex].TotalEstimate += parseInt(youTrackIssue.Estimate);
-                        summaryItem.Breakdown[breakdownIndex].TotalActual += parseInt(youTrackIssue.ActualTime);
+                        var estimate = parseInt(youTrackIssue.Estimate);
+                        var actualTime = parseInt(youTrackIssue.ActualTime);
+
+                        if ((estimate > 0) && (actualTime === 0)) actualTime = estimate;
+
+                        summaryItem.Breakdown[breakdownIndex].TotalEstimate += estimate;
+                        summaryItem.Breakdown[breakdownIndex].TotalActual += actualTime;
+
                         if (youTrackIssue.Type === "Rework Task")
                             summaryItem.Breakdown[breakdownIndex].TotalReworks += 1;
                         else
@@ -473,7 +388,7 @@ function GetTeamBreakdown(filterText) {
 
     for (var teamIndex in settings.Teams) {
         var summaryItem = new Object();
-        summaryItem.Team = settings.Teams[teamIndex];
+        summaryItem.Team = settings.Teams[teamIndex].TeamName;
         summaryItem.Breakdown = [];
 
         var today = new Date();
@@ -497,7 +412,7 @@ function GetTeamBreakdown(filterText) {
             workingDate.setDate(workingDate.getDate() + 1);
         }
 
-        if ((filterText === "ALL") || (filterText === settings.Teams[teamIndex]))
+        if ((filterText === "ALL") || (filterText === settings.Teams[teamIndex].TeamName))
             summaries.push(summaryItem);
     }
 
@@ -507,11 +422,16 @@ function GetTeamBreakdown(filterText) {
             var summaryItem = summaries[summaryIndex];
 
             if (summaryItem.Team === youTrackIssue.Team) {
-                var youTrackIssueMonth = GetStringDateAsMonthText(youTrackIssue.Resolved);
+                var youTrackIssueMonth = GetStringDateAsMonthText(youTrackIssue.DoneDate);
                 for (var breakdownIndex in summaryItem.Breakdown) {
                     if (summaryItem.Breakdown[breakdownIndex].MonthLabel === youTrackIssueMonth) {
-                        summaryItem.Breakdown[breakdownIndex].TotalEstimate += parseInt(youTrackIssue.Estimate);
-                        summaryItem.Breakdown[breakdownIndex].TotalActual += parseInt(youTrackIssue.ActualTime);
+                        var estimate = parseInt(youTrackIssue.Estimate);
+                        var actualTime = parseInt(youTrackIssue.ActualTime);
+
+                        if ((estimate > 0) && (actualTime === 0)) actualTime = estimate;
+
+                        summaryItem.Breakdown[breakdownIndex].TotalEstimate += estimate;
+                        summaryItem.Breakdown[breakdownIndex].TotalActual += actualTime;
                         if (youTrackIssue.Type === "Rework Task")
                             summaryItem.Breakdown[breakdownIndex].TotalReworks += 1;
                         else
@@ -532,12 +452,6 @@ function GetDevFullName(devUserName) {
     }
 
     return "Ooops";
-}
-
-function SetRefresh() {
-    var navigationParameter = getURLParameter("DoNavigation");
-    if (navigationParameter != null && navigationParameter === "Yes")
-        window.setTimeout(function () { window.location.replace(settings.NextScreenUrl); }, settings.ScreenDuration);
 }
 
 function GetStartDate() {

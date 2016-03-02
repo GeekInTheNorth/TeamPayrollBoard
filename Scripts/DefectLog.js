@@ -16,76 +16,11 @@ function ShowDefectSummary() {
             accept: 'application/json'
         },
         success: function (jsonData) {
-            LoadSettings(jsonData)
+            settings = jsonData;
             SetRefresh();
             GetYouTrackData(settings);
         }
     });
-}
-
-function LoadSettings(jsonData)
-{
-    settings = new Object();
-    settings.ScreenDuration = 0;
-    settings.NextScreenUrl = undefined;
-    settings.YouTrackRootUrl = undefined;
-    settings.ReworkTypes = [];
-    settings.DefectTypes = [];
-    settings.Projects = [];
-    settings.UserStoryTypes = [];
-    settings.Exclusions = [];
-
-
-    for (var key in jsonData)
-    {
-        if (key === "ScreenDuration") {
-            settings.ScreenDuration = parseInt(jsonData[key]);
-        } else if (key === "NextScreenUrl") {
-            settings.NextScreenUrl = jsonData[key];
-        } else if (key === "YouTrackRootUrl") {
-            settings.YouTrackRootUrl = jsonData[key];
-        } else if (key === "ReworkTypes") {
-            var reworkCollection = jsonData[key];
-            for (var reworkIndex in reworkCollection) {
-                var reworkTaskType = reworkCollection[reworkIndex];
-                settings.ReworkTypes.push(reworkTaskType);
-            }
-        } else if (key === "DefectTypes") {
-            var defectCollection = jsonData[key];
-            for (var defectIndex in defectCollection) {
-                var defectTaskType = defectCollection[defectIndex];
-                settings.DefectTypes.push(defectTaskType);
-            }
-        } else if (key === "Projects") {
-            var projectCollection = jsonData[key];
-            for (var projectIndex in projectCollection) {
-                var projectName = projectCollection[projectIndex];
-                settings.Projects.push(projectName);
-            }
-        } else if (key === "UserStoryTypes") {
-            var userStoryTypeCollection = jsonData[key];
-            for (var userStoryIndex in userStoryTypeCollection) {
-                var userStoryType = userStoryTypeCollection[userStoryIndex];
-                settings.UserStoryTypes.push(userStoryType);
-            }
-        } else if (key === "Exclusions") {
-            var exclusionCollection = jsonData[key];
-            for (var exclusionIndex in exclusionCollection) {
-                var exclusionFieldCollection = exclusionCollection[exclusionIndex];
-                var exclusion = new Object();
-                exclusion.Field = undefined;
-                exclusion.Value = undefined;
-                for (var exclusionFieldKey in exclusionFieldCollection) {
-                    if (exclusionFieldKey === "Field")
-                        exclusion.Field = exclusionFieldCollection[exclusionFieldKey];
-                    if (exclusionFieldKey === "Value")
-                        exclusion.Value = exclusionFieldCollection[exclusionFieldKey];
-                }
-
-                settings.Exclusions.push(exclusion);
-            }
-        }
-    }
 }
 
 function GetYouTrackData(settings) {
@@ -93,16 +28,53 @@ function GetYouTrackData(settings) {
     issuedLogged = [];
     apisCompleted = 0;
 
+    var allTypes = [];
+    for (var userStoryIndex in settings.UserStoryTypes)
+        allTypes.push(settings.UserStoryTypes[userStoryIndex]);
+    for (var defectIndex in settings.DefectTypes)
+        allTypes.push(settings.DefectTypes[defectIndex]);
+    for (var reworkIndex in settings.ReworkTypes)
+        allTypes.push(settings.ReworkTypes[reworkIndex]);
+
     var today = new Date();
     var firstMonth = new Date(today.getFullYear() - 1, today.getMonth(), 1, 0, 0, 0, 0);
     var monthCollection = GetMonthCollection();
     
     for (var monthLocation in monthCollection) {
         var monthFilter = GetMonthTextQueryString(monthCollection[monthLocation].Description);
-        var filterText = "created%3A+" + monthFilter + "+or+resolved%3A+" + monthFilter;
-        filterText += "+order+by%3A+created+desc&with=Type&with=Project&with=created&with=Sprint&with=State&with=resolved&with=summary&with=id&with=subsystem&with=priority&max=500";
 
-        var queryText = settings.YouTrackRootUrl + "/rest/issue?filter=" + filterText;
+        var filterText = "created: " + monthFilter + " Type: ";
+        for (var typeIndex in allTypes)
+        {
+            if (typeIndex > 0)
+                filterText += ", ";
+            filterText += "{" + allTypes[typeIndex] + "}";
+        }
+
+        filterText += " project: ";
+        for (var projectIndex in settings.Projects) {
+            if (projectIndex > 0)
+                filterText += ", ";
+            filterText += "{" + settings.Projects[projectIndex] + "}";
+        }
+
+        filterText += "or resolved: " + monthFilter + " Type: ";
+
+        for (var typeIndex in allTypes) {
+            if (typeIndex > 0)
+                filterText += ", ";
+            filterText += "{" + allTypes[typeIndex] + "}";
+        }
+
+        filterText += " project: ";
+        for (var projectIndex in settings.Projects) {
+            if (projectIndex > 0)
+                filterText += ", ";
+            filterText += "{" + settings.Projects[projectIndex] + "}";
+        }
+
+        filterText = encodeURI(filterText);
+        var queryText = settings.YouTrackRootUrl + "/rest/issue?filter=" + filterText + "&max=500";
 
         $.ajax({
             url: queryText,
@@ -111,7 +83,7 @@ function GetYouTrackData(settings) {
                 accept: 'application/json'
             },
             success: function (jsonData) {
-                ConvertYouTrackDataToObjects(jsonData);
+                ConvertYouTrackDataToObjects(jsonData, youTrackIssues, issuedLogged);
                 apisCompleted += 1;
             },
             error: function () {
@@ -121,106 +93,6 @@ function GetYouTrackData(settings) {
     }
 
     setTimeout(function () { DisplaySummaryWhenReady() }, 1000);
-}
-
-function ConvertYouTrackDataToObjects(jsonData) {
-    for (var taskLocation in jsonData.issue) {
-        var task = jsonData.issue[taskLocation];
-        var createdDate = undefined;
-        var sprintName = undefined;
-        var resolved = undefined;
-        var state = undefined;
-        var type = undefined;
-        var title = undefined;
-        var subSystem = undefined;
-        var issueId = task.id;
-        var validId = false;
-        var priority = "unknown";
-
-        if (issuedLogged.indexOf(issueId) > -1) continue;
-
-        issuedLogged.push(issueId);
-
-        for (var fieldLocation in task.field) {
-            var field = task.field[fieldLocation];
-
-            if (field.name === "Type") {
-                type = field.value[0];
-            }
-
-            if (field.name === "created") {
-                createdDate = ConvertYouTrackDate(field.value);
-            }
-
-            if (field.name === "Sprint") {
-                sprintName = field.value[0];
-            }
-
-            if (field.name === "State") {
-                state = field.value[0];
-            }
-
-            if (field.name === "resolved") {
-                resolved = ConvertYouTrackDate(field.value);
-            }
-
-            if (field.name === "summary") {
-                title = field.value;
-            }
-
-            if (field.name === "Priority") {
-                priority = field.value[0];
-            }
-
-            if (field.name === "Subsystem") {
-                subSystem = field.value[0];
-            }
-        }
-
-        var taskObject = new Object();
-        taskObject.Type = type;
-        taskObject.Created = createdDate;
-        taskObject.Sprint = sprintName;
-        taskObject.State = state;
-        taskObject.Resolved = resolved;
-        taskObject.Title = title;
-        taskObject.IssueId = issueId;
-        taskObject.Subsystem = subSystem;
-        taskObject.IsExcluded = false;
-        taskObject.Priority = priority;
-
-        for (var projectIndex in settings.Projects)
-        {
-            var projectName = settings.Projects[projectIndex];
-            if (taskObject.IssueId.indexOf(projectName) > -1) {
-                validId = true
-            }
-        }
-
-        if (!validId)
-            continue;
-
-        if ((settings.UserStoryTypes.indexOf(taskObject.Type) === -1) &&
-            (settings.ReworkTypes.indexOf(taskObject.Type) === -1) &&
-            (settings.DefectTypes.indexOf(taskObject.Type) === -1))
-            continue;
-
-        for (var exclusionIndex in settings.Exclusions) {
-            var exclusion = settings.Exclusions[exclusionIndex];
-
-            if ((exclusion.Field === "Sprint") && (exclusion.Value === taskObject.Sprint))
-                taskObject.IsExcluded = true;
-            if ((exclusion.Field === "Type") && (exclusion.Value === taskObject.Type))
-                taskObject.IsExcluded = true;
-            if ((exclusion.Field === "Subsystem") && (exclusion.Value === taskObject.Subsystem))
-                taskObject.IsExcluded = true;
-        }
-
-        if (taskObject.IsExcluded === false)
-            youTrackIssues.push(taskObject);
-    }
-
-    return youTrackIssues;
 }
 
 function DisplaySummaryWhenReady() {
@@ -249,6 +121,9 @@ function AnalyzeReworksBySprint() {
 
         if (task.Sprint === undefined)
             continue
+
+        if (IsExcluded(task))
+            continue;
 
         var foundReworksBySprint = false;
 
@@ -315,6 +190,10 @@ function AnalyzeIssuesByMonth() {
 
     for (var taskLocation in youTrackIssues) {
         var task = youTrackIssues[taskLocation];
+
+        if (IsExcluded(task))
+            continue;
+
         var createdDate = task.Created.substr(6, 4) + "-" + task.Created.substr(3, 2) + "-" + task.Created.substr(0, 2);
         var createdDescription = GetMonthString(new Date(createdDate));
 
@@ -424,9 +303,11 @@ function DrilldownToMonthBreakdown(monthText) {
             ((GetStringDateAsMonthText(issue.Created) === monthText) || (GetStringDateAsMonthText(issue.Resolved) === monthText))) {
             includeItem = true
         }
-            
 
         if (!includeItem) continue;
+
+        if (IsExcluded(issue))
+            continue;
 
         if (settings.UserStoryTypes.indexOf(issue.Type) > -1)
         {
@@ -463,6 +344,9 @@ function DrilldownToSprintBreakdown(sprintText) {
         var issue = youTrackIssues[issueIndex];
 
         if (issue.Sprint != sprintText) continue;
+
+        if (IsExcluded(issue))
+            continue;
 
         if (settings.UserStoryTypes.indexOf(issue.Type) > -1) {
             if (issue.Resolved === undefined) continue;
@@ -816,6 +700,19 @@ function SortByDate(a, b) {
         return 0;
 }
 
+function IsExcluded(youTrackIssue) {
+    for (var exclusionIndex in settings.Exclusions) {
+        var exclusion = settings.Exclusions[exclusionIndex];
+
+        if ((exclusion.Field === "Subsystem") && (youTrackIssue.Subsystem === exclusion.Value))
+            return true;
+
+        if ((exclusion.Field === "Sprint") && (youTrackIssue.Sprint === exclusion.Value))
+            return true;
+    }
+
+    return false;
+}
 function ShowDefectList(includeResolved) {
     $("body").empty();
     SetHeader();
@@ -827,6 +724,9 @@ function ShowDefectList(includeResolved) {
 
     for (var issueIndex in youTrackIssues) {
         var youTrackIssue = youTrackIssues[issueIndex];
+
+        if (IsExcluded(youTrackIssue))
+            continue;
 
         if (settings.DefectTypes.indexOf(youTrackIssue.Type) === -1)
             continue;

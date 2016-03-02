@@ -1,7 +1,23 @@
-﻿var requestsMade = 0;
+﻿var settings = undefined;
+var requestsMade = 0;
 var requestsCompleted = 0;
 var issuedLogged = [];
 var youTrackIssues = [];
+
+function StartIssueCheck() {
+    $.ajax({
+        type: "Get",
+        url: "./Data/SiteSettings.json",
+        dataType: "json",
+        headers: {
+            accept: 'application/json'
+        },
+        success: function (jsonData) {
+            settings = jsonData;
+            CheckIssues();
+        }
+    });
+}
 
 function CheckIssues() {
     $("#table-issue-results").remove();
@@ -40,7 +56,7 @@ function CheckIssues() {
 
 function RequestData(youTrackId)
 {
-    urlSearch = "http://172.27.74.34:9111/rest/issue?filter=issue+id%3A+" + youTrackId + "&with=Type&with=Sprint&with=State&with=summary&with=id&with=subsystem";
+    urlSearch = settings.YouTrackRootUrl + "/rest/issue?filter=issue+id%3A+" + youTrackId;
 
     $.ajax({
         url: urlSearch,
@@ -49,7 +65,7 @@ function RequestData(youTrackId)
             accept: 'application/json'
         },
         success: function (jsonData) {
-            ConvertYouTrackDataToObjects(jsonData);
+            ConvertYouTrackDataToObjects(jsonData, youTrackIssues, issuedLogged)
             requestsCompleted++;
         },
         error: function () {
@@ -58,72 +74,9 @@ function RequestData(youTrackId)
     });
 }
 
-function ConvertYouTrackDataToObjects(jsonData) {
-    for (var taskLocation in jsonData.issue) {
-        var task = jsonData.issue[taskLocation];
-        var createdDate = undefined;
-        var sprintName = undefined;
-        var resolved = undefined;
-        var state = undefined;
-        var type = undefined;
-        var title = undefined;
-        var subSystem = undefined;
-        var issueId = task.id;
-
-        if (issuedLogged.indexOf(issueId) > -1) continue;
-
-        issuedLogged.push(issueId);
-
-        for (var fieldLocation in task.field) {
-            var field = task.field[fieldLocation];
-
-            if (field.name === "Type") {
-                type = field.value[0];
-            }
-
-            if (field.name === "created") {
-                createdDate = ConvertYouTrackDate(field.value);
-            }
-
-            if (field.name === "Sprint") {
-                sprintName = field.value[0];
-            }
-
-            if (field.name === "State") {
-                state = field.value[0];
-            }
-
-            if (field.name === "resolved") {
-                resolved = ConvertYouTrackDate(field.value);
-            }
-
-            if (field.name === "summary") {
-                title = field.value;
-            }
-
-            if (field.name === "Subsystem") {
-                subSystem = field.value[0];
-            }
-        }
-
-        var taskObject = new Object();
-        taskObject.Type = type;
-        taskObject.Created = createdDate;
-        taskObject.Sprint = sprintName;
-        taskObject.State = state;
-        taskObject.Resolved = resolved;
-        taskObject.Title = title;
-        taskObject.IssueId = issueId;
-        taskObject.Subsystem = subSystem;
-        taskObject.IsExcluded = false;
-
-        youTrackIssues.push(taskObject);
-    }
-}
-
 function DisplayData() {
     youTrackIssues.sort(CompareYouTrackId);
-    var markUp = "<table id='table-issue-results'>"
+    var markUp = "<table id='table-issue-results' class='datatable'>"
     markUp += "<tr>";
     markUp += "<th class='numeric-cell'>ID</th>";
     markUp += "<th class='text-cell'>Type</th>";
@@ -138,7 +91,7 @@ function DisplayData() {
     for (var issueLocation in youTrackIssues) {
         var youTrackIssue = youTrackIssues[issueLocation];
         markUp = "<tr>";
-        markUp += "<td class='numeric-cell'><a href='http://172.27.74.34:9111/issue/" + youTrackIssue.IssueId + "' target='_blank'>" + youTrackIssue.IssueId + "</a></td>";
+        markUp += "<td class='numeric-cell'><a href='" + settings.YouTrackRootUrl + "/issue/" + youTrackIssue.IssueId + "' target='_blank'>" + youTrackIssue.IssueId + "</a></td>";
         markUp += "<td class='text-cell'>" + youTrackIssue.Type + "</td>";
         markUp += "<td class='text-cell'>" + youTrackIssue.Subsystem + "</td>";
         markUp += "<td class='text-cell'>" + youTrackIssue.Title + "</td>";

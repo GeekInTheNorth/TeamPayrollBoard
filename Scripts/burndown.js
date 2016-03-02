@@ -1,11 +1,50 @@
-﻿var sprintStart = new Date(2016, 1, 15, 0, 0, 0, 0);
-var sprintLength = 14;
-var sprintNumber = 8;
+﻿var settings = undefined;
 
 $(document).ready(function () {
     SetRefresh();
-    GetYouTrackData();
+    ShowBurnDown();
 });
+
+function ShowBurnDown() {
+    $.ajax({
+        type: "Get",
+        url: "./Data/SiteSettings.json",
+        dataType: "json",
+        headers: {
+            accept: 'application/json'
+        },
+        success: function (jsonData) {
+            settings = jsonData;
+            GetYouTrackData();
+        }
+    });
+}
+
+function GetYouTrackData() {
+    var teamDetails = GetTeamForBoard();
+    var url = "Sprint: {" + teamDetails.Sprint.Name + "} Type: ";
+
+    for (var taskIndex in settings.BurndownTasks) {
+        if (taskIndex > 0)
+            url += ", ";
+        url += "{" + settings.BurndownTasks[taskIndex] + "}";
+    }
+
+    url += " order by: updated desc";
+    url = encodeURI(url);
+    url = settings.YouTrackRootUrl + "/rest/issue?filter=" + url + "&max=500";
+
+    $.ajax({
+        url: url,
+        dataType: "json",
+        headers: {
+            accept: 'application/json'
+        },
+        success: function (jsonData) {
+            AnalyseYouTrackData(teamDetails, jsonData);
+        }
+    });
+}
 
 function CreateChartContainer() {
     var chartWidth = window.innerWidth - 20;
@@ -20,7 +59,7 @@ function CreateChartContainer() {
     $("body").append(markUp);
 }
 
-function DrawChart(dates, idealProgress, workingProgress, doneProgress)
+function DrawChart(teamDetails, dates, idealProgress, workingProgress, doneProgress)
 {
     CreateChartContainer();
 
@@ -28,7 +67,7 @@ function DrawChart(dates, idealProgress, workingProgress, doneProgress)
 	var fromLoc = 0;
 	var toLoc = 0.5;
 	var foundDatePosition = false;
-	var title = GetTitleForBoard(dates);
+	var title = GetTitleForBoard(teamDetails, dates);
 	
 	for (index = 0; index < dates.length; index++)
 	{
@@ -87,69 +126,27 @@ function DrawChart(dates, idealProgress, workingProgress, doneProgress)
     });
 }
 
-function GetYouTrackData()
-{
-    var team = GetTeamForBoard();
-    var url = "http://172.27.74.34:9111/rest/issue/byproject/CAS?filter=Sprint%3A+%7B" + team + "+" + sprintNumber + "%7D+Type%3A+Task%2C+%7BTesting+Task%7D%2C+%7BProduct+Owner+Review%7D%2C+Merge%2C+%7BRework+Task%7D+order+by%3A+updated+desc&max=200";
-
-	$.ajax({
-	    url: url,
-        dataType: "json",
-        headers: {
-            accept: 'application/json'
-        },
-        success: function(jsonData) {
-            AnalyseYouTrackData(jsonData);
-        }
-    });
-}
-
-function AnalyseYouTrackData(jsonData)
+function AnalyseYouTrackData(teamDetails, jsonData)
 {
     var totalEstimate = 0;
-    var dates = GetDatesForSprintAsStrings();
-    var doneItems = GetIntegerArray();
-    var inProgressItems = GetIntegerArray();
-    var doneProgress = GetIntegerArray();
-    var idealProgress = GetIntegerArray();
-    var workingProgress = GetIntegerArray();
+    var dates = GetDatesForSprintAsStrings(teamDetails);
+    var doneItems = GetIntegerArray(teamDetails);
+    var inProgressItems = GetIntegerArray(teamDetails);
+    var doneProgress = GetIntegerArray(teamDetails);
+    var idealProgress = GetIntegerArray(teamDetails);
+    var workingProgress = GetIntegerArray(teamDetails);
 	
-	for (var taskLocation in jsonData)
-	{
-		var task = jsonData[taskLocation];
-		var isDone = false;
-		var isWorking = false;
-		var estimate = 0;
-		var doneDate = undefined;
-		var inProgressDate = undefined;
-		var type = "";
-			
-		for (var fieldLocation in task.field)
-		{
-			var field = task.field[fieldLocation];
+    var youTrackIssues = [];
+    var loggedIds = [];
 
-			if (field.name == "Type")
-			{
-				type = field.value[0];
-			}
-			
-			if (field.name == "Estimate")
-			{
-				estimate = parseInt(field.value[0], 0);
-			}
-			
-			if (field.name == "DoneDate")
-			{
-				doneDate = ConvertYouTrackDate(field.value[0]);
-				isDone = true;
-			}
-			
-			if (field.name == "InProgressDate")
-			{
-				inProgressDate = ConvertYouTrackDate(field.value[0]);
-				isWorking = true;
-			}
-		}
+    ConvertYouTrackDataToObjects(jsonData, youTrackIssues, loggedIds);
+
+    for (var issueLocation in youTrackIssues) {
+        var youTrackIssue = youTrackIssues[issueLocation];
+        var isDone = (youTrackIssue.DoneDate !== undefined);
+        var isWorking = (youTrackIssue.InProgressDate !== undefined);
+        var doneDate = youTrackIssue.DoneDate;
+        var inProgressDate = youTrackIssue.InProgressDate;
 
 		if (isDone)
 		    doneDate = ShiftDateFromWeekendToWeekDay(doneDate);
@@ -160,13 +157,13 @@ function AnalyseYouTrackData(jsonData)
 		if (isWorking && IsDateLessThan(inProgressDate, dates[0]))
 		    inProgressDate = dates[0];
 
-		totalEstimate += estimate;
+		totalEstimate += youTrackIssue.Estimate;
 
 		for (var loop = 0; loop < dates.length; loop++) {
 		    if (isDone && doneDate === dates[loop])
-		        doneItems[loop] += estimate;
+		        doneItems[loop] += youTrackIssue.Estimate;
 		    if (isWorking && inProgressDate === dates[loop])
-		        inProgressItems[loop] += estimate;
+		        inProgressItems[loop] += youTrackIssue.Estimate;
 		}
 	}
 	
@@ -182,7 +179,7 @@ function AnalyseYouTrackData(jsonData)
 		}
 	}
 	
-	DrawChart(dates, idealProgress, workingProgress, doneProgress);
+	DrawChart(teamDetails, dates, idealProgress, workingProgress, doneProgress);
 }
 
 function GetToday()
@@ -241,15 +238,21 @@ function SetRefresh() {
 }
 
 function GetTeamForBoard() {
-    var team = getURLParameter("Team");
+    var teamName = getURLParameter("Team");
+    var teamDetails = undefined;
 
-    if ((team === null) || (team === undefined))
-        team = "Payroll";
+    for (var teamLocation in settings.Teams) {
+        if (teamName === settings.Teams[teamLocation].TeamName)
+            teamDetails = settings.Teams[teamLocation];
+    }
 
-    return team;
+    if (teamDetails === undefined)
+        teamDetails = settings.Teams[0]
+
+    return teamDetails;
 }
 
-function GetTitleForBoard(dates) {
+function GetTitleForBoard(teamDetails, dates) {
     var firstDate = dates[0];
     var lastDate = dates[dates.length - 1];
 
@@ -258,8 +261,7 @@ function GetTitleForBoard(dates) {
     var lastDay = parseInt(lastDate.substr(0, 2));
     var lastMonth = GetStringDateAsMonthText(lastDate);
 
-    var team = GetTeamForBoard();
-    var title = team + " Burndown - ";
+    var title = teamDetails.TeamName + " Burndown - ";
     title += firstDay + GetDaySuffix(firstDay) + " " + firstMonth;
     title += " to ";
     title += lastDay + GetDaySuffix(lastDay) + " " + lastMonth;
@@ -278,12 +280,12 @@ function GetDaySuffix(day) {
     return "th";
 }
 
-function GetDatesForSprintAsStrings() {
+function GetDatesForSprintAsStrings(teamDetails) {
     var dates = [];
     var loop = 0;
 
-    while (dates.length < sprintLength) {
-        var thisDate = new Date(sprintStart);
+    while (dates.length < teamDetails.Sprint.DurationDays) {
+        var thisDate = new Date(teamDetails.Sprint.StartDate);
         thisDate.setDate(thisDate.getDate() + loop);
 
         if ((thisDate.getDay() !== 0) && (thisDate.getDay() !== 6))
@@ -295,10 +297,10 @@ function GetDatesForSprintAsStrings() {
     return dates;
 }
 
-function GetIntegerArray() {
+function GetIntegerArray(teamDetails) {
     var arrayOfInts = [];
 
-    for (var loop = 0; loop < sprintLength; loop++) {
+    for (var loop = 0; loop < teamDetails.Sprint.DurationDays; loop++) {
         arrayOfInts.push(0);
     }
 

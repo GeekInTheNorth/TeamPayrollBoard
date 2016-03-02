@@ -83,7 +83,7 @@ function CallYouTrackApi(apiUrl, teamName) {
             accept: 'application/json'
         },
         success: function (jsonData) {
-            ConvertYouTrackDataToObjects(jsonData, teamName);
+            ConvertYouTrackDataToObjects(jsonData, youTrackIssues, issuedLogged, teamName);
             apiCompleted += 1;
         },
         error: function () {
@@ -98,85 +98,6 @@ function DisplayDataWhenReady() {
     }
     else {
         setTimeout(function () { DisplayDataWhenReady() }, 1000);
-    }
-}
-
-function ConvertYouTrackDataToObjects(jsonData, teamName) {
-    for (var taskLocation in jsonData.issue) {
-        var task = jsonData.issue[taskLocation];
-        var state = undefined;
-        var type = undefined;
-        var title = undefined;
-        var subSystem = undefined;
-        var tshirtSize = undefined;
-        var issueId = task.id;
-        var estimate = 0;
-        var actualTime = 0;
-        var hasRequiresTaskingTag = false;
-        var hasRequiresTestingTag = false;
-        var hasRequiresPOReview = false;
-
-        if (issuedLogged.indexOf(issueId) > -1) continue;
-
-        issuedLogged.push(issueId);
-
-        for (var fieldLocation in task.field) {
-            var field = task.field[fieldLocation];
-
-            if (field.name === "Type") {
-                type = field.value[0];
-            }
-
-            if (field.name === "State") {
-                state = field.value[0];
-            }
-
-            if (field.name === "summary") {
-                title = field.value;
-            }
-
-            if (field.name === "Subsystem") {
-                subSystem = field.value[0];
-            }
-
-            if (field.name === "Estimate") {
-                estimate = parseInt(field.value[0]);
-            }
-
-            if (field.name === "ActualTime") {
-                actualTime = parseInt(field.value[0]);
-            }
-
-            if (field.name === "T-Shirt Size") {
-                tshirtSize = field.value[0];
-            }
-        }
-
-        for (var tagIndex in task.tag) {
-            var tagValue = task.tag[tagIndex].value;
-            if (tagValue === "Needs Testing Tasks") hasRequiresTestingTag = true;
-            if (tagValue === "Req. PO Review") hasRequiresPOReview = true;
-            if (tagValue === "Needs Tasking Out") hasRequiresTaskingTag = true;
-        }
-
-        if ((actualTime === 0) && (estimate > 0))
-            actualTime = estimate;
-
-        var taskObject = new Object();
-        taskObject.Type = type;
-        taskObject.State = state;
-        taskObject.Title = title;
-        taskObject.IssueId = issueId;
-        taskObject.Subsystem = subSystem;
-        taskObject.Team = teamName;
-        taskObject.Estimate = estimate;
-        taskObject.ActualTime = actualTime;
-        taskObject.TShirtSize = tshirtSize;
-        taskObject.NeedsPOReview = hasRequiresPOReview;
-        taskObject.NeedsTestingTasks = hasRequiresTestingTag || hasRequiresTaskingTag || (estimate <= settings.MergeAndPOReviewDuration);
-        taskObject.NeedsDevTasks = hasRequiresTaskingTag || (estimate <= settings.MergeAndPOReviewDuration);
-
-        youTrackIssues.push(taskObject);
     }
 }
 
@@ -217,7 +138,13 @@ function DisplaySummary() {
         for (var summaryIndex in summaries) {
             var summary = summaries[summaryIndex];
             if (summary.TShirtSize === youTrackItem.TShirtSize) {
-                summary.TotalActual += parseInt(youTrackItem.ActualTime);
+                var actualTime = youTrackItem.ActualTime;
+                var estimate = youTrackItem.Estimate;
+
+                if ((actualTime === 0) && (estimate > 0))
+                    actualTime = estimate;
+
+                summary.TotalActual += actualTime;
                 summary.TotalItems += 1;
                 summary.Issues.push(youTrackItem);
                 break;
@@ -270,15 +197,21 @@ function DisplayBreakDown(tshirtSize) {
 
         if (youTrackIssue.TShirtSize !== tshirtSize) continue;
 
-        var average = CalculateAverage(youTrackIssue.ActualTime, 1);
+        var actualTime = youTrackIssue.ActualTime;
+        var estimate = youTrackIssue.Estimate;
+
+        if ((actualTime === 0) && (estimate > 0))
+            actualTime = estimate;
+
+        var average = CalculateAverage(actualTime, 1);
 
         markUp += "<tr>";
         markUp += "<td class='text-cell'><a href='" + settings.YouTrackRootUrl + "/issue/" + youTrackIssue.IssueId + "' target='_blank' class='backlog-command'>" + youTrackIssue.IssueId + "</a></td>";
         markUp += "<td class='text-cell'>" + youTrackIssue.Title + "</td>";
         markUp += "<td class='text-cell'>" + youTrackIssue.Type + "</td>";
         markUp += "<td class='text-cell'>" + youTrackIssue.Subsystem + "</td>";
-        markUp += "<td class='numeric-cell'>" + youTrackIssue.Estimate + "</td>";
-        markUp += "<td class='numeric-cell'>" + youTrackIssue.ActualTime + "</td>";
+        markUp += "<td class='numeric-cell'>" + estimate + "</td>";
+        markUp += "<td class='numeric-cell'>" + actualTime + "</td>";
         markUp += "<td class='numeric-cell'>" + average + "</td>";
         if (average <= target)
             markUp += "<td class='text-cell'>Yes</td>";
