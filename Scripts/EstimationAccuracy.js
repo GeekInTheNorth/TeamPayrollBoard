@@ -205,7 +205,7 @@ function DisplaySummary() {
         var summary = new Object();
         summary.TShirtSize = tshirtSizes[tshirtIndex];
         summary.Issues = [];
-        summary.TotalEstimate = 0;
+        summary.TotalActual = 0;
         summary.TotalItems = 0;
         summaries.push(summary);
     }
@@ -217,7 +217,7 @@ function DisplaySummary() {
         for (var summaryIndex in summaries) {
             var summary = summaries[summaryIndex];
             if (summary.TShirtSize === youTrackItem.TShirtSize) {
-                summary.TotalEstimate += parseInt(youTrackItem.ActualTime);
+                summary.TotalActual += parseInt(youTrackItem.ActualTime);
                 summary.TotalItems += 1;
                 summary.Issues.push(youTrackItem);
                 break;
@@ -237,8 +237,8 @@ function DisplaySummary() {
         markUp += "<tr>";
         markUp += "<td class='text-cell'><a href='#' onclick='DisplayBreakDown(\"" + summary.TShirtSize + "\");' class='backlog-command'>" + summary.TShirtSize + "</a></td>";
         markUp += "<td class='numeric-cell'>" + summary.TotalItems + "</td>";
-        markUp += "<td class='numeric-cell'>" + summary.TotalEstimate + "</td>";
-        markUp += "<td class='numeric-cell'>" + CalculateAverage(summary.TotalEstimate, summary.TotalItems) + "</td>";
+        markUp += "<td class='numeric-cell'>" + summary.TotalActual + "</td>";
+        markUp += "<td class='numeric-cell'>" + CalculateAverage(summary.TotalActual, summary.TotalItems) + "</td>";
         markUp += "</tr>";
     }
 
@@ -257,10 +257,11 @@ function DisplayBreakDown(tshirtSize) {
     markUp += "<table class='datatable'><tr>";
     markUp += "<th class='text-cell'>Issue Id</th>";
     markUp += "<th class='text-cell'>Title</th>";
+    markUp += "<th class='text-cell'>Type</th>";
+    markUp += "<th class='text-cell'>Module</th>";
     markUp += "<th class='numeric-cell'>Estimate (hrs)</th>";
     markUp += "<th class='numeric-cell'>Actual (hrs)</th>";
-    markUp += "<th class='numeric-cell'>Maximum Target (Days)</th>";
-    markUp += "<th class='numeric-cell'>Actual Average (Days)</th>";
+    markUp += "<th class='numeric-cell'>Actual (Days)</th>";
     markUp += "<th class='text-cell'>On Target</th>";
     markUp += "</tr>";
 
@@ -274,9 +275,10 @@ function DisplayBreakDown(tshirtSize) {
         markUp += "<tr>";
         markUp += "<td class='text-cell'><a href='" + settings.YouTrackRootUrl + "/issue/" + youTrackIssue.IssueId + "' target='_blank' class='backlog-command'>" + youTrackIssue.IssueId + "</a></td>";
         markUp += "<td class='text-cell'>" + youTrackIssue.Title + "</td>";
+        markUp += "<td class='text-cell'>" + youTrackIssue.Type + "</td>";
+        markUp += "<td class='text-cell'>" + youTrackIssue.Subsystem + "</td>";
         markUp += "<td class='numeric-cell'>" + youTrackIssue.Estimate + "</td>";
         markUp += "<td class='numeric-cell'>" + youTrackIssue.ActualTime + "</td>";
-        markUp += "<td class='numeric-cell'>" + target + "</td>";
         markUp += "<td class='numeric-cell'>" + average + "</td>";
         if (average <= target)
             markUp += "<td class='text-cell'>Yes</td>";
