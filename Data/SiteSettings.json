@@ -8,9 +8,9 @@
       "Projects": [ "CAS" ],
       "SubSystems": [ "Payroll (Web)", "Payroll (Windows)" ],
       "Sprint": {
-        "Name": "Payroll 8",
-        "StartDate": "2016-02-15",
-        "DurationDays": "14"
+        "Name": "Payroll 9",
+        "StartDate": "2016-03-08",
+        "DurationDays": "13"
       }
     },
     {
@@ -18,8 +18,8 @@
       "Projects": [ "CAS" ],
       "SubSystems": [ "HR", "Mobile", "Online Recruitment", "Recruitment", "Talent Management", "Training", "Workflow" ],
       "Sprint": {
-        "Name": "HR 8",
-        "StartDate": "2016-02-15",
+        "Name": "HR 9",
+        "StartDate": "2016-03-07",
         "DurationDays": "14"
       }
     },
@@ -28,8 +28,8 @@
       "Projects": [ "CAS" ],
       "SubSystems": [ "UI", "UI (iPad)" ],
       "Sprint": {
-        "Name": "UI 8",
-        "StartDate": "2016-02-15",
+        "Name": "UI 9",
+        "StartDate": "2016-03-07",
         "DurationDays": "14"
       }
     }
@@ -107,5 +107,6 @@
   "BurndownTasks": [ "Task", "Testing Task", "Rework Task", "Merge" ],
   "DevLogTasks": [ "Task", "Testing Task", "Rework Task" ],
   "DesigningStates": [ "Submitted", "Designing", "Ready to Start" ],
+  "CompletedStates": [ "Complete", "Released" ],
   "UserStories": [ "User Story", "Defect" ]
 }

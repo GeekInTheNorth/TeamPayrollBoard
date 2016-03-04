@@ -11,7 +11,7 @@ $(document).ready(function () {
 function ShowBacklog() {
     $.ajax({
         type: "Get",
-        url: "./Data/BacklogParameters.json",
+        url: "./Data/SiteSettings.json",
         dataType: "json",
         headers: {
             accept: 'application/json'
@@ -30,38 +30,29 @@ function GetYouTrackData() {
     apiStarted = 0;
     apiCompleted = 0;
 
-    var baseFilter = "project: ";
-    var firstProjectDone = false;
-    for (var projectIndex in settings.Projects) {
-        if (firstProjectDone)
-            baseFilter += ", ";
-        else
-            firstProjectDone = true;
-        baseFilter += "{" + settings.Projects[projectIndex] + "}";
-    }
-
-    baseFilter += " Type: {User Story} ";
-//    var firstTaskTypeDone = false;
-//    for (var taskIndex in settings.BacklogTypes) {
-//        if (firstTaskTypeDone)
-//            baseFilter += ", ";
-//        else
-//            firstTaskTypeDone = true;
-//        baseFilter += "{" + settings.BacklogTypes[taskIndex] + "}";
-//    }
-
-    baseFilter += " State: ";
-    var firstStateDone = false;
-    for (var stateIndex in settings.CompletedStates) {
-        if (firstStateDone)
-            baseFilter += ", ";
-        else
-            firstStateDone = true;
-        baseFilter += "{" + settings.CompletedStates[stateIndex] + "}";
-    }
-
     for (var teamIndex in settings.Teams) {
         var teamDetails = settings.Teams[teamIndex];
+
+        var baseFilter = "project: ";
+        for (var projectIndex in teamDetails.Projects) {
+            if (projectIndex > 0)
+                baseFilter += ", ";
+            baseFilter += "{" + teamDetails.Projects[projectIndex] + "}";
+        }
+
+        baseFilter += " Type: ";
+        for (var taskIndex in settings.UserStories) {
+            if (taskIndex > 0)
+                baseFilter += ", ";
+            baseFilter += "{" + settings.UserStories[taskIndex] + "}";
+        }
+
+        baseFilter += " State: ";
+        for (var stateIndex in settings.CompletedStates) {
+            if (stateIndex > 0)
+                baseFilter += ", ";
+            baseFilter += "{" + settings.CompletedStates[stateIndex] + "}";
+        }
 
         for (var subSystemIndex in teamDetails.SubSystems) {
             var filterText = baseFilter + " Subsystem: {" + teamDetails.SubSystems[subSystemIndex] + "}";
@@ -101,18 +92,58 @@ function DisplayDataWhenReady() {
     }
 }
 
-function DisplayHeader() {
+function DisplayHeaders() {
+    var filterBar = $("div.filter-bar");
+    var teamFilter = undefined;
+    var typeFilter = "User Story";
+
+    if (filterBar.length > 0) {
+        teamFilter = $("select#TeamFilter").val();
+        typeFilter = $("select#TypeFilter").val();
+    }
+
+    $("body").empty();
+
     var markUp = "<div class='header-bar'>";
     markUp += "<a href='index.html' class='Header-Command'>Home</a>";
     markUp += "<a href='#' onclick='javascript:DisplaySummary();' class='Header-Command'>Summary</a>";
     markUp += "<a href='#' onclick='javascript:RefreshData();' class='Header-Command'>Refresh Data</a>";
     markUp += "</div>";
+    markUp += "<div class='filter-bar'>";
+    markUp += "Team:&nbsp;<select id='TeamFilter'>";
+    markUp += "<option value='ALL'>All Teams</option>";
+
+    for (var teamIndex in settings.Teams) {
+        var team = settings.Teams[teamIndex];
+        markUp += "<option value='" + team.TeamName + "'>" + team.TeamName + "</option>";
+    }
+
+    markUp += "</select>";
+    markUp += "&nbsp;Type:&nbsp;<select id='TypeFilter'>";
+    markUp += "<option value='ALL'>All Types</option>";
+
+    for (var typeIndex in settings.UserStories) {
+        var typeName = settings.UserStories[typeIndex];
+        markUp += "<option value='" + typeName + "'>" + typeName + "</option>";
+    }
+
+    markUp += "</select>";
+    markUp += "</div>";
+
     $("body").append(markUp);
+
+    if (teamFilter !== undefined) {
+        $("select#TeamFilter").val(teamFilter).change();
+    }
+
+    $("select#TypeFilter").val(typeFilter).change();
 }
 
 function DisplaySummary() {
-    $("body").empty();
-    DisplayHeader();
+    DisplayHeaders();
+
+    var teamFilter = $("select#TeamFilter").val();
+    var typeFilter = $("select#TypeFilter").val();
 
     var tshirtSizes = [];
     tshirtSizes.push("Extra Small (1 Day)");
@@ -134,6 +165,9 @@ function DisplaySummary() {
     for (var youtrackIndex in youTrackIssues) {
         var youTrackItem = youTrackIssues[youtrackIndex];
         if (youTrackItem.TShirtSize === undefined) continue;
+
+        if (teamFilter !== "ALL" && youTrackItem.Team !== teamFilter) continue;
+        if (typeFilter !== "ALL" && youTrackItem.Type !== typeFilter) continue;
 
         for (var summaryIndex in summaries) {
             var summary = summaries[summaryIndex];
@@ -173,15 +207,20 @@ function DisplaySummary() {
 
     $("body").append(markUp);
     ShowRowColoursForBreakdowns();
+
+    $("select#TeamFilter").change(function () { DisplaySummary(); });
+    $("select#TypeFilter").change(function () { DisplaySummary(); });
 }
 
 function DisplayBreakDown(tshirtSize) {
-    $("body").empty();
-    DisplayHeader();
+    DisplayHeaders();
+
+    var teamFilter = $("select#TeamFilter").val();
+    var typeFilter = $("select#TypeFilter").val();
 
     var target = GetTargetValue(tshirtSize);
     var markUp = "<h1>Breakdown for TShirt Size: " + tshirtSize + "</H1>";
-    markUp += "<table class='datatable'><tr>";
+    markUp += "<table class='datatable full-width'><tr>";
     markUp += "<th class='text-cell'>Issue Id</th>";
     markUp += "<th class='text-cell'>Title</th>";
     markUp += "<th class='text-cell'>Type</th>";
@@ -196,6 +235,8 @@ function DisplayBreakDown(tshirtSize) {
         var youTrackIssue = youTrackIssues[youtrackIndex];
 
         if (youTrackIssue.TShirtSize !== tshirtSize) continue;
+        if (teamFilter !== "ALL" && youTrackIssue.Team !== teamFilter) continue;
+        if (typeFilter !== "ALL" && youTrackIssue.Type !== typeFilter) continue;
 
         var actualTime = youTrackIssue.ActualTime;
         var estimate = youTrackIssue.Estimate;
@@ -224,6 +265,9 @@ function DisplayBreakDown(tshirtSize) {
 
     $("body").append(markUp);
     ShowRowColoursForBreakdowns();
+
+    $("select#TeamFilter").change(function () { DisplayBreakDown(tshirtSize); });
+    $("select#TypeFilter").change(function () { DisplayBreakDown(tshirtSize); });
 }
 
 function CalculateAverage(totalEstimate, totalItems) {
