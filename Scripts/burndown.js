@@ -231,7 +231,13 @@ function ShiftDateFromWeekendToWeekDay(dateToShift)
 
 function SetRefresh() {
     var navigationParameter = getURLParameter("DoNavigation");
-    if (navigationParameter != null && navigationParameter === "Yes")
+    var currentIndex = getURLParameter("DisplayIndex");
+    if (navigationParameter != null && currentIndex != null && navigationParameter === "Yes")
+    {
+        var url = "YouTrackSummary.html?DisplayIndex=" + currentIndex;
+        setTimeout(function () { window.location.replace(url); }, 60000);
+    }
+    else if (navigationParameter != null && navigationParameter === "Yes")
         setTimeout(function () { window.location.replace("YouTrackSummary.html?DisplayIndex=2"); }, 60000);
     else
         setTimeout(function () { window.location.reload(); }, 180000);
