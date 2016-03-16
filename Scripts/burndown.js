@@ -68,6 +68,11 @@ function DrawChart(teamDetails, dates, idealProgress, workingProgress, doneProgr
 	var toLoc = 0.5;
 	var foundDatePosition = false;
 	var title = GetTitleForBoard(teamDetails, dates);
+	var lineWidth = 2;
+
+	var urlLineWidth = getURLParameter("LineWidth");
+	if (urlLineWidth !== null)
+	    lineWidth = parseInt(urlLineWidth);
 	
 	for (index = 0; index < dates.length; index++)
 	{
@@ -86,44 +91,65 @@ function DrawChart(teamDetails, dates, idealProgress, workingProgress, doneProgr
 	}
 	
 	$('#container').highcharts({
-		title: {
-		    text: title,
-            x: -20, //center,
-			style: {
-                fontWeight: 'bold',
-				fontSize: '30px'
-            },
-        },
-        xAxis: {
-            categories: dates,
-			plotBands: {
-				color: '#fea', // Color value
-				from: fromLoc, // Start of the plot band
-				to: toLoc // End of the plot band
-			  }
-        },
-        yAxis: {
-            title: {
-                text: 'Estimation'
-            },
-            min : 0,
-            plotLines: [{
-                value: 0,
-                width: 1,
-                color: '#808080'
-            }]
-        },
-        series: [{
-            name: 'Ideal',
-            data: idealProgress
-        }, {
-            name: 'Not Started',
-            data: workingProgress
-        }, {
-            name: 'Remaining',
-            data: doneProgress
-        }]
-    });
+	    title: {
+	        text: title,
+	        x: -20, //center,
+	        style: {
+	            fontWeight: 'bold',
+	            fontSize: '30px'
+	        },
+	    },
+	    xAxis: {
+	        categories: dates,
+	        plotBands: {
+	            color: '#fea', // Color value
+	            from: fromLoc, // Start of the plot band
+	            to: toLoc // End of the plot band
+	        }
+	    },
+	    yAxis: {
+	        title: {
+	            text: 'Estimation'
+	        },
+	        min: 0,
+	        plotLines: [{
+	            value: 0,
+	            width: 1,
+	            color: '#808080'
+	        }]
+	    },
+	    series: [{
+	        name: 'Ideal',
+	        data: idealProgress,
+	        lineWidth: lineWidth,
+	        lineColor: '#3333ff',
+	        marker: {
+	            fillColor: '#ffffff',
+	            lineWidth: 2,
+	            lineColor: '#3333ff'
+	        }
+	    }, {
+	        name: 'Not Started',
+	        data: workingProgress,
+	        lineWidth: lineWidth,
+	        lineColor: '#000000',
+	        marker: {
+	            fillColor: '#ffffff',
+	            lineWidth: 2,
+	            lineColor: '#000000'
+	        }
+	    }, {
+	        name: 'Remaining',
+	        data: doneProgress,
+	        lineWidth: lineWidth,
+	        lineColor: '#00dd00',
+	        marker: {
+	            fillColor: '#ffffff',
+	            lineWidth: 2,
+	            lineColor: '#00dd00'
+	        }
+	    }]
+	});
 }
 
 function AnalyseYouTrackData(teamDetails, jsonData)
