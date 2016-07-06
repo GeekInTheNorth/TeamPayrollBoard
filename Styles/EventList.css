@@ -1,0 +1,39 @@
+﻿body {
+    margin: 0;
+    background-color: white;
+    font-family: Verdana, Tahoma, sans-serif;
+}
+
+table.event-list {
+    border-collapse: collapse;
+    border: none;
+    width: 100%;
+}
+
+table.event-list td {
+    padding: 5px;
+    font-size: 2.5em;
+    text-align: left;
+}
+
+table.event-list th {
+    padding: 5px;
+    font-size: 2.5em;
+    border-bottom: 3px solid black;
+    text-align: left;
+    background-color: steelblue;
+    color: white;
+    font-weight: bold;
+}
+
+table.event-list td.history {
+    color:gray;
+}
+
+tr.normal-row {
+    background-color: white;
+}
+
+tr.alternate-row {
+    background-color: lightsteelblue;
+}
