@@ -284,10 +284,10 @@ function DisplayDevStats() {
 
     var markUp = "<table class='datatable' id='dev-breakdown'>";
     markUp += "<tr>";
+    markUp += "<th class='text-cell'>Quarter</th>";
     markUp += "<th class='numeric-cell'>Id</th>";
     markUp += "<th class='text-cell'>Type</th>";
     markUp += "<th class='text-cell'>Title</th>";
-    markUp += "<th class='text-cell'>Quarter</th>";
     markUp += "<th class='text-cell'>Estimate</th>";
     markUp += "<th class='text-cell'>Actual</th>";
     markUp += "<th class='numeric-cell'>Contribution</th>";
@@ -295,6 +295,8 @@ function DisplayDevStats() {
     markUp += "<th class='numeric-cell'>Max Reworks</th>";
     markUp += "<th class='text-cell'>Reworks Exceeded</th>";
     markUp += "</tr>";
+
+    devStats.sort(CompareDevStats);
 
     for (var devStatIndex in devStats) {
         var devStat = devStats[devStatIndex];
@@ -314,10 +316,10 @@ function DisplayDevStats() {
                 if (devStat.Risk === "Low") maximumReworks = maximumReworks / 2;
 
                 markUp += "<tr>";
+                markUp += "<td class='text-cell'>" + devStat.Quarter + "</td>";
                 markUp += "<td class='numeric-cell'>" + devStat.Id + "</td>";
                 markUp += "<td class='text-cell'>" + devStat.Type + "</td>";
-                markUp += "<td class='text-cell'>" + devStat.Title + "</td>";
-                markUp += "<td class='text-cell'>" + devStat.Quarter + "</td>";
+                markUp += "<td class='text-cell'>" + devStat.Title + "</td>";                
                 markUp += "<td class='text-cell'>" + dev.TotalEstimatedDev + " of " + devStat.TotalEstimatedDev + "</td>";
                 markUp += "<td class='text-cell'>" + dev.TotalActualDev + " of " + devStat.TotalActualDev + "</td>";
                 markUp += "<td class='numeric-cell'>" + FormatNumberToString(contributionPercentage) + " %</td>";
@@ -490,6 +492,22 @@ function CompareQuarterlySummaries(a, b) {
     if (a.Quarter < b.Quarter)
         return 1;
     else if (a.Quarter > b.Quarter)
+        return -1;
+    else
+        return 0;
+}
+
+function CompareDevStats(a, b) {
+    var issueIdA = parseInt(a.Id.replace("CAS-", ""));
+    var issueIdB = parseInt(a.Id.replace("CAS-", ""));
+
+    if (a.Quarter < b.Quarter)
+        return 1;
+    else if (a.Quarter > b.Quarter)
+        return -1;
+    else if (issueIdA > issueIdB)
+        return 1;
+    else if (issueIdA < issueIdB)
         return -1;
     else
         return 0;
