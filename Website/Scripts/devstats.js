@@ -319,7 +319,7 @@ function DisplayDevStats() {
                 markUp += "<td class='text-cell'>" + devStat.Quarter + "</td>";
                 markUp += "<td class='numeric-cell'>" + devStat.Id + "</td>";
                 markUp += "<td class='text-cell'>" + devStat.Type + "</td>";
-                markUp += "<td class='text-cell'>" + devStat.Title + "</td>";                
+                markUp += "<td class='text-cell'>" + htmlEncode(devStat.Title) + "</td>";                
                 markUp += "<td class='text-cell'>" + dev.TotalEstimatedDev + " of " + devStat.TotalEstimatedDev + "</td>";
                 markUp += "<td class='text-cell'>" + dev.TotalActualDev + " of " + devStat.TotalActualDev + "</td>";
                 markUp += "<td class='numeric-cell'>" + FormatNumberToString(contributionPercentage) + " %</td>";
@@ -511,4 +511,10 @@ function CompareDevStats(a, b) {
         return -1;
     else
         return 0;
+}
+
+function htmlEncode(value) {
+    //create a in-memory div, set it's inner text(which jQuery automatically encodes)
+    //then grab the encoded contents back out.  The div never exists on the page.
+    return $('<div/>').text(value).html();
 }
