@@ -44,6 +44,8 @@ function LoadSettings() {
 function LoadHeadersFromYouTrack() {
     var apiUrl = settings.YouTrackRootUrl + "/rest/issue?filter=project%3ACAS+Type%3A+%7BUser+Story%7D%2C+Defect+State%3A+Complete+%2C+Released+Subsystem%3A+-UI+%2C+-%7BUI+(iPad)%7D+order+by%3A+%7Bissue+id%7D+asc&max=500";
 
+    $("body").append("<div class='progress'>Loading Headers from You Track.</div>");
+
     apiStarted++;
 
     $.ajax({
@@ -228,9 +230,13 @@ function DisplayResults() {
 
 function DisplayFilter() {
     var devNames = [];
+    var quarters = [];
 
     for (var devStatIndex in devStats) {
         var devStat = devStats[devStatIndex];
+
+        if (quarters.indexOf(devStat.Quarter) === -1)
+            quarters.push(devStat.Quarter);
 
         for (var devIndex in devStat.DevContributors) {
             var dev = devStat.DevContributors[devIndex];
@@ -242,9 +248,11 @@ function DisplayFilter() {
     }
 
     devNames.sort();
+    quarters.sort();
+    quarters.reverse();
 
     var markUp = "<div class='filter-bar'>";
-    markUp += "Developer:&nbsp;<select id='dev-filter'>";
+    markUp += "Developer:&nbsp;<select id='dev-filter' class='devstat-filter'>";
 
     for (var devNameIndex in devNames) {
         var devName = devNames[devNameIndex];
@@ -253,18 +261,29 @@ function DisplayFilter() {
 
         markUp += "<option value='" + devName + "'>" + devName + "</option>";
     }
+
     markUp += "</select>";
     markUp += "&nbsp;Type:&nbsp;";
-    markUp += "<select id='type-filter'>";
+    markUp += "<select id='type-filter' class='devstat-filter'>";
     markUp += "<option value='All'>All</option>";
     markUp += "<option value='User Story'>User Story</option>";
     markUp += "<option value='Defect'>Defect</option>";
     markUp += "</select>";
+    markUp += "&nbsp;Quarter:&nbsp;";
+    markUp += "<select id='quarter-filter' class='devstat-filter'>";
+    markUp += "<option value='All'>All</option>";
+
+    for (var quarterIndex in quarters) {
+        markUp += "<option value='" + quarters[quarterIndex] + "'>" + quarters[quarterIndex] + "</option>";
+    }
+
+    markUp += "</select>";
+    quarters
     markUp += "</div>";
 
     $("body").append(markUp);
 
-    $("select#dev-filter").change(function () {
+    $("select.devstat-filter").change(function () {
         DisplayDevStats();
     });
 
@@ -273,6 +292,8 @@ function DisplayFilter() {
 
 function DisplayDevStats() {
     var selectedDevName = $("select#dev-filter").val();
+    var selectedType = $("select#type-filter").val();
+    var selectedQuarter = $("select#quarter-filter").val();
     var totalDefects = 0.0;
     var defectReturn = 0.0;
     var totalUserStories = 0.0;
@@ -311,13 +332,21 @@ function DisplayDevStats() {
                 var contributionPercentage = 100.0 * contribution;
                 var maximumReworks = Math.round(devStat.TotalEstimatedDev / 10);
                 var exceedsReworks = false;
-
+                
                 if (devStat.Risk === "High") maximumReworks = maximumReworks * 2;
                 if (devStat.Risk === "Low") maximumReworks = maximumReworks / 2;
 
+                exceedsReworks = (maximumReworks < devStat.NumberOfReworks);
+
+                UpdateQuarter(devStat.Type, devStat.Quarter, contribution, exceedsReworks);
+
+                if (selectedType === "User Story" && devStat.Type !== "User Story") continue;
+                if (selectedType === "Defect" && devStat.Type === "User Story") continue;
+                if (selectedQuarter !== "All" && devStat.Quarter !== selectedQuarter) continue;
+
                 markUp += "<tr>";
                 markUp += "<td class='text-cell'>" + devStat.Quarter + "</td>";
-                markUp += "<td class='numeric-cell'>" + devStat.Id + "</td>";
+                markUp += "<td class='numeric-cell'><a href='" + settings.YouTrackRootUrl + "/issue/" + devStat.Id + "' target='_blank'>" + devStat.Id + "</a></td>";
                 markUp += "<td class='text-cell'>" + devStat.Type + "</td>";
                 markUp += "<td class='text-cell'>" + htmlEncode(devStat.Title) + "</td>";                
                 markUp += "<td class='text-cell'>" + dev.TotalEstimatedDev + " of " + devStat.TotalEstimatedDev + "</td>";
@@ -325,10 +354,6 @@ function DisplayDevStats() {
                 markUp += "<td class='numeric-cell'>" + FormatNumberToString(contributionPercentage) + " %</td>";
                 markUp += "<td class='numeric-cell'>" + devStat.NumberOfReworks + "</td>";
                 markUp += "<td class='numeric-cell'>" + maximumReworks + "</td>";
-
-                var exceedsReworks = (maximumReworks < devStat.NumberOfReworks);
-
-                UpdateQuarter(devStat.Type, devStat.Quarter, contribution, exceedsReworks);
 
                 if (maximumReworks < devStat.NumberOfReworks)
                     markUp += "<td class='text-cell'>Yes</td>";
@@ -499,16 +524,16 @@ function CompareQuarterlySummaries(a, b) {
 
 function CompareDevStats(a, b) {
     var issueIdA = parseInt(a.Id.replace("CAS-", ""));
-    var issueIdB = parseInt(a.Id.replace("CAS-", ""));
+    var issueIdB = parseInt(b.Id.replace("CAS-", ""));
 
     if (a.Quarter < b.Quarter)
         return 1;
     else if (a.Quarter > b.Quarter)
         return -1;
     else if (issueIdA > issueIdB)
-        return 1;
-    else if (issueIdA < issueIdB)
         return -1;
+    else if (issueIdA < issueIdB)
+        return 1;
     else
         return 0;
 }
