@@ -1,7 +1,7 @@
 ﻿var youTrackIds = [];
 var youTrackHeaders = [];
 var devStats = [];
-var quarterlySummaries = [];
+var companyYearSummaries = [];
 var apiStarted = 0;
 var apiCompleted = 0;
 var issuesToAnalyze = 0;
@@ -78,7 +78,7 @@ function StoreYouTrackHeaders(youTrackData) {
         header.Type = "User Story";
         header.Id = task.id;
         header.Risk = "Medium";
-        header.Quarter = "Unknown";
+        header.CompanyYear = "Unknown";
 
         for (var fieldIndex in task.field) {
             var field = task.field[fieldIndex];
@@ -86,7 +86,7 @@ function StoreYouTrackHeaders(youTrackData) {
             if (field.name === "Type") header.Type = field.value[0];
             if (field.name === "summary") header.Title = field.value;
             if (field.name === "Risk") header.Risk = parseInt(field.value[0]);
-            if (field.name === "resolved") header.Quarter = ConvertYouTrackDateToQuarter(field.value);
+            if (field.name === "resolved") header.CompanyYear = ConvertYouTrackDateToCompanyYear(field.value);
         }
 
         youTrackHeaders.push(header);
@@ -107,13 +107,13 @@ function LoadYouTrackIssueData(){
 
         apiStarted++;
 
-        RequestYouTrackIssueData(apiUrl, youTrackHeader.Id, youTrackHeader.Type, youTrackHeader.Title, youTrackHeader.Risk, youTrackHeader.Quarter);
+        RequestYouTrackIssueData(apiUrl, youTrackHeader.Id, youTrackHeader.Type, youTrackHeader.Title, youTrackHeader.Risk, youTrackHeader.CompanyYear);
     }
 
     WaitToDisplayResults();
 }
 
-function RequestYouTrackIssueData(apiUrl, issueId, issueType, issueTitle, issueRisk, issueQuarter) {
+function RequestYouTrackIssueData(apiUrl, issueId, issueType, issueTitle, issueRisk, issueCompanyYear) {
     $.ajax({
         url: apiUrl,
         dataType: "json",
@@ -121,7 +121,7 @@ function RequestYouTrackIssueData(apiUrl, issueId, issueType, issueTitle, issueR
             accept: 'application/json'
         },
         success: function (jsonData) {
-            AnalyzeYouTrackIssueData(jsonData, issueId, issueType, issueTitle, issueRisk, issueQuarter);
+            AnalyzeYouTrackIssueData(jsonData, issueId, issueType, issueTitle, issueRisk, issueCompanyYear);
             apiCompleted += 1;
         },
         error: function () {
@@ -130,13 +130,13 @@ function RequestYouTrackIssueData(apiUrl, issueId, issueType, issueTitle, issueR
     });
 }
 
-function AnalyzeYouTrackIssueData(youTrackData, issueId, issueType, issueTitle, issueRisk, issueQuarter) {
+function AnalyzeYouTrackIssueData(youTrackData, issueId, issueType, issueTitle, issueRisk, issueCompanyYear) {
     var devStat = new Object();
     devStat.Id = issueId;
     devStat.Title = issueTitle;
     devStat.Type = issueType;
     devStat.Risk = issueRisk;
-    devStat.Quarter = issueQuarter;
+    devStat.CompanyYear = issueCompanyYear;
     devStat.TotalActualDev = 0;
     devStat.TotalEstimatedDev = 0;
     devStat.TotalActualQA = 0;
@@ -230,13 +230,13 @@ function DisplayResults() {
 
 function DisplayFilter() {
     var devNames = [];
-    var quarters = [];
+    var companyYears = [];
 
     for (var devStatIndex in devStats) {
         var devStat = devStats[devStatIndex];
 
-        if (quarters.indexOf(devStat.Quarter) === -1)
-            quarters.push(devStat.Quarter);
+        if (companyYears.indexOf(devStat.CompanyYear) === -1)
+            companyYears.push(devStat.CompanyYear);
 
         for (var devIndex in devStat.DevContributors) {
             var dev = devStat.DevContributors[devIndex];
@@ -248,8 +248,8 @@ function DisplayFilter() {
     }
 
     devNames.sort();
-    quarters.sort();
-    quarters.reverse();
+    companyYears.sort();
+    companyYears.reverse();
 
     var markUp = "<div class='filter-bar'>";
     markUp += "Developer:&nbsp;<select id='dev-filter' class='devstat-filter'>";
@@ -269,16 +269,16 @@ function DisplayFilter() {
     markUp += "<option value='User Story'>User Story</option>";
     markUp += "<option value='Defect'>Defect</option>";
     markUp += "</select>";
-    markUp += "&nbsp;Quarter:&nbsp;";
-    markUp += "<select id='quarter-filter' class='devstat-filter'>";
+    markUp += "&nbsp;Company Year:&nbsp;";
+    markUp += "<select id='company-year-filter' class='devstat-filter'>";
     markUp += "<option value='All'>All</option>";
 
-    for (var quarterIndex in quarters) {
-        markUp += "<option value='" + quarters[quarterIndex] + "'>" + quarters[quarterIndex] + "</option>";
+    for (var companyYearIndex in companyYears) {
+        var companyYear = companyYears[companyYearIndex];
+        markUp += "<option value='" + companyYear + "'>" + companyYear + "/" + (companyYear + 1) + "</option>";
     }
 
     markUp += "</select>";
-    quarters
     markUp += "</div>";
 
     $("body").append(markUp);
@@ -293,19 +293,19 @@ function DisplayFilter() {
 function DisplayDevStats() {
     var selectedDevName = $("select#dev-filter").val();
     var selectedType = $("select#type-filter").val();
-    var selectedQuarter = $("select#quarter-filter").val();
+    var selectedCompanyYear = $("select#company-year-filter").val();
     var totalDefects = 0.0;
     var defectReturn = 0.0;
     var totalUserStories = 0.0;
     var userStoryReturn = 0.0;
-    quarterlySummaries = [];
+    companyYearSummaries = [];
 
     $("table#dev-breakdown").remove();
     $("table#dev-summary").remove();
 
     var markUp = "<table class='datatable' id='dev-breakdown'>";
     markUp += "<tr>";
-    markUp += "<th class='text-cell'>Quarter</th>";
+    markUp += "<th class='text-cell'>Company Year</th>";
     markUp += "<th class='numeric-cell'>Id</th>";
     markUp += "<th class='text-cell'>Type</th>";
     markUp += "<th class='text-cell'>Title</th>";
@@ -338,14 +338,14 @@ function DisplayDevStats() {
 
                 exceedsReworks = (maximumReworks < devStat.NumberOfReworks);
 
-                UpdateQuarter(devStat.Type, devStat.Quarter, contribution, exceedsReworks);
+                UpdateCompanyYear(devStat.Type, devStat.CompanyYear, contribution, exceedsReworks);
 
                 if (selectedType === "User Story" && devStat.Type !== "User Story") continue;
                 if (selectedType === "Defect" && devStat.Type === "User Story") continue;
-                if (selectedQuarter !== "All" && devStat.Quarter !== selectedQuarter) continue;
+                if (selectedCompanyYear !== "All" && devStat.CompanyYear !== parseInt(selectedCompanyYear)) continue;
 
                 markUp += "<tr>";
-                markUp += "<td class='text-cell'>" + devStat.Quarter + "</td>";
+                markUp += "<td class='text-cell'>" + devStat.CompanyYear + "</td>";
                 markUp += "<td class='numeric-cell'><a href='" + settings.YouTrackRootUrl + "/issue/" + devStat.Id + "' target='_blank'>" + devStat.Id + "</a></td>";
                 markUp += "<td class='text-cell'>" + devStat.Type + "</td>";
                 markUp += "<td class='text-cell'>" + htmlEncode(devStat.Title) + "</td>";                
@@ -384,39 +384,39 @@ function DisplayDevStats() {
 function GetSummaryMarkup() {
     var summaryMarkUp = "<table class='datatable' id='dev-summary' style='margin-bottom: 10px;'>";
     summaryMarkUp += "<tr>";
-    summaryMarkUp += "<th class='text-cell'>Quarter</th>";
+    summaryMarkUp += "<th class='text-cell'>Company Year</th>";
     summaryMarkUp += "<th class='numeric-cell'>User Story Contribution</th>";
     summaryMarkUp += "<th class='numeric-cell'>User Story Return</th>";
     summaryMarkUp += "<th class='numeric-cell'>Defect Contribution</th>";
     summaryMarkUp += "<th class='numeric-cell'>Defect Return</th>";
     summaryMarkUp += "</tr>";
 
-    quarterlySummaries.sort(CompareQuarterlySummaries);
+    companyYearSummaries.sort(CompareCompanyYearSummaries);
 
     var totalUserStories = 0;
     var totalUserStoryReturn = 0;
     var totalDefects = 0;
     var totalDefectReturn = 0;
 
-    for (var quarterIndex in quarterlySummaries) {
-        var quarterSummary = quarterlySummaries[quarterIndex];
+    for (var companyYearIndex in companyYearSummaries) {
+        var companyYearSummary = companyYearSummaries[companyYearIndex];
 
-        totalUserStories += quarterSummary.TotalUserStories;
-        totalUserStoryReturn += quarterSummary.UserStoryReturn;
-        totalDefects += quarterSummary.TotalDefects;
-        totalDefectReturn += quarterSummary.DefectReturn;
+        totalUserStories += companyYearSummary.TotalUserStories;
+        totalUserStoryReturn += companyYearSummary.UserStoryReturn;
+        totalDefects += companyYearSummary.TotalDefects;
+        totalDefectReturn += companyYearSummary.DefectReturn;
 
-        var userStoryReturnPercentage = 100.0 * (quarterSummary.UserStoryReturn / quarterSummary.TotalUserStories);
-        var defectReturnPercentage = 100.0 * (quarterSummary.DefectReturn / quarterSummary.TotalDefects);
+        var userStoryReturnPercentage = 100.0 * (companyYearSummary.UserStoryReturn / companyYearSummary.TotalUserStories);
+        var defectReturnPercentage = 100.0 * (companyYearSummary.DefectReturn / companyYearSummary.TotalDefects);
 
         if (isNaN(userStoryReturnPercentage)) userStoryReturnPercentage = 0;
         if (isNaN(defectReturnPercentage)) defectReturnPercentage = 0;
 
         summaryMarkUp += "<tr>";
-        summaryMarkUp += "<td class='text-cell'>" + quarterSummary.Quarter + "</td>";
-        summaryMarkUp += "<td class='numeric-cell'>" + FormatNumberToString(quarterSummary.TotalUserStories) + "</td>";
+        summaryMarkUp += "<td class='text-cell'>" + companyYearSummary.CompanyYear + "</td>";
+        summaryMarkUp += "<td class='numeric-cell'>" + FormatNumberToString(companyYearSummary.TotalUserStories) + "</td>";
         summaryMarkUp += "<td class='numeric-cell'>" + FormatNumberToString(userStoryReturnPercentage) + "%</td>";
-        summaryMarkUp += "<td class='numeric-cell'>" + FormatNumberToString(quarterSummary.TotalDefects) + "</td>";
+        summaryMarkUp += "<td class='numeric-cell'>" + FormatNumberToString(companyYearSummary.TotalDefects) + "</td>";
         summaryMarkUp += "<td class='numeric-cell'>" + FormatNumberToString(defectReturnPercentage) + "%</td>";
         summaryMarkUp += "</tr>";
     }
@@ -428,7 +428,7 @@ function GetSummaryMarkup() {
     if (isNaN(totalDefectReturnPercentage)) totalDefectReturnPercentage = 0;
 
     summaryMarkUp += "<tr>";
-    summaryMarkUp += "<th class='text-cell'>All</th>";
+    summaryMarkUp += "<th class='text-cell'>Overall</th>";
     summaryMarkUp += "<th class='numeric-cell'>" + FormatNumberToString(totalUserStories) + "</th>";
     summaryMarkUp += "<th class='numeric-cell'>" + FormatNumberToString(totalUserStoryReturnPercentage) + "%</th>";
     summaryMarkUp += "<th class='numeric-cell'>" + FormatNumberToString(totalDefects) + "</th>";
@@ -440,7 +440,7 @@ function GetSummaryMarkup() {
     return summaryMarkUp;
 }
 
-function UpdateQuarter(issueType, quarter, contribution, exceedsRework) {
+function UpdateCompanyYear(issueType, companyYear, contribution, exceedsRework) {
     var updated = false;
     var userStory = 0;
     var userStoryReturn = 0;
@@ -458,30 +458,30 @@ function UpdateQuarter(issueType, quarter, contribution, exceedsRework) {
             defectReturn += contribution;
     }
 
-    for (var quarterIndex in quarterlySummaries) {
-        var quarterSummary = quarterlySummaries[quarterIndex];
+    for (var companyYearIndex in companyYearSummaries) {
+        var companyYearSummary = companyYearSummaries[companyYearIndex];
 
-        if (quarterSummary.Quarter === quarter) {
-            quarterSummary.TotalUserStories += userStory;
-            quarterSummary.UserStoryReturn += userStoryReturn;
-            quarterSummary.TotalDefects += defect;
-            quarterSummary.DefectReturn += defectReturn;
+        if (companyYearSummary.CompanyYear === companyYear) {
+            companyYearSummary.TotalUserStories += userStory;
+            companyYearSummary.UserStoryReturn += userStoryReturn;
+            companyYearSummary.TotalDefects += defect;
+            companyYearSummary.DefectReturn += defectReturn;
             updated = true;
         }
     }
 
     if (!updated) {
-        var newQuarterSummary = new Object();
-        newQuarterSummary.Quarter = quarter
-        newQuarterSummary.TotalUserStories = userStory;
-        newQuarterSummary.UserStoryReturn = userStoryReturn;
-        newQuarterSummary.TotalDefects = defect;
-        newQuarterSummary.DefectReturn = defectReturn;
-        quarterlySummaries.push(newQuarterSummary);
+        var newCompanyYearSummary = new Object();
+        newCompanyYearSummary.CompanyYear = companyYear
+        newCompanyYearSummary.TotalUserStories = userStory;
+        newCompanyYearSummary.UserStoryReturn = userStoryReturn;
+        newCompanyYearSummary.TotalDefects = defect;
+        newCompanyYearSummary.DefectReturn = defectReturn;
+        companyYearSummaries.push(newCompanyYearSummary);
     }
 }
 
-function ConvertYouTrackDateToQuarter(milliseconds) {
+function ConvertYouTrackDateToCompanyYear(milliseconds) {
     var thisDate = new Date(0);
     thisDate.setMilliseconds(milliseconds);
 
@@ -498,25 +498,19 @@ function ConvertYouTrackDateToQuarter(milliseconds) {
 
     var month = thisDate.getMonth() + 1;
     var year = thisDate.getFullYear();
-    var quarter = "Q1";
+    if (month <= 4) year -= 1;
 
-    if (month === 4 || month === 5 || month == 6) quarter = "Q2";
-    if (month === 7 || month === 8 || month == 9) quarter = "Q3";
-    if (month === 10 || month === 11 || month == 12) quarter = "Q4";
-
-    quarter = year + " " + quarter;
-
-    return quarter;
+    return year;
 }
 
 function FormatNumberToString(numberToFormat) {
     return parseFloat(Math.round(numberToFormat * 100) / 100).toFixed(2);
 }
 
-function CompareQuarterlySummaries(a, b) {
-    if (a.Quarter < b.Quarter)
+function CompareCompanyYearSummaries(a, b) {
+    if (a.CompanyYear < b.CompanyYear)
         return 1;
-    else if (a.Quarter > b.Quarter)
+    else if (a.CompanyYear > b.CompanyYear)
         return -1;
     else
         return 0;
@@ -526,9 +520,9 @@ function CompareDevStats(a, b) {
     var issueIdA = parseInt(a.Id.replace("CAS-", ""));
     var issueIdB = parseInt(b.Id.replace("CAS-", ""));
 
-    if (a.Quarter < b.Quarter)
+    if (a.CompanyYear < b.CompanyYear)
         return 1;
-    else if (a.Quarter > b.Quarter)
+    else if (a.CompanyYear > b.CompanyYear)
         return -1;
     else if (issueIdA > issueIdB)
         return -1;
