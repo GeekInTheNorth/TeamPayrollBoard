@@ -1,0 +1,21 @@
+{
+  "YouTrackRootUrl": "",
+  "DevStatsBurndownApi": "",
+  "TaskTypes": [ "Task" ],
+  "WorkRemainingStates": [ "Submitted", "Designing", "Ready to Start", "In Progress" ],
+  "SprintStartDate": "2016-07-04",
+  "SprintDurationDays": "14",
+  "Teams": [
+    {
+      "Team": "Team Name",
+      "Sprint": "Sprint Name",
+      "Resource": [
+        {
+          "Name": "One",
+          "DailyCapacity": "6",
+          "Exceptions": [ "2016-07-11", "2016-07-12", "2016-07-13", "2016-07-14", "2016-07-15" ]
+        }
+      ]
+    }
+  ]
+}
