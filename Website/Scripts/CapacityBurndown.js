@@ -34,8 +34,9 @@ function LoadSettings() {
 function GetYouTrackData() {
     var team = GetTeam();
 
-    var url = "Sprint: {" + team.Sprint + "} Type: ";
+    var url = "Sprint: " + CollateSprintText(team.Sprint, true);
 
+    url += " Type: ";
     for (var taskIndex in settings.TaskTypes) {
         if (taskIndex > 0)
             url += ", ";
@@ -93,6 +94,8 @@ function AnalyseYouTrackData(team, youTrackData) {
         var workRemaining = 0;
 
         for (var fieldIndex in task.field) {
+            var field = task.field[fieldIndex];
+
             if (field.name === "State") state = field.value[0];
             if (field.name === "Estimate") estimate = parseInt(field.value[0]);
             if (field.name === "WorkRemaining") workRemaining = parseInt(field.value[0]);
@@ -105,7 +108,8 @@ function AnalyseYouTrackData(team, youTrackData) {
     }
 
     var today = GetToday();
-    RecordCurrentOutstandingWork(team.Sprint, today, workRemainingToday);
+    var sprintSearch = CollateSprintText(team.Sprint, false);
+    RecordCurrentOutstandingWork(sprintSearch, today, workRemainingToday);
     youTrackComplete = true;
 }
 
@@ -128,6 +132,8 @@ function GetDateArray() {
 
 function GetDailyCapacities(team, dates) {
     var capacities = [];
+    var hoursInDay = parseFloat(settings.HoursInDay);
+    var noiseMultiplier = parseFloat(settings.NoiseReduction);
 
     for (var dateIndex in dates) {
         capacities.push(0);
@@ -135,10 +141,10 @@ function GetDailyCapacities(team, dates) {
 
     for (var resourceIndex in team.Resource) {
         var resource = team.Resource[resourceIndex];
-        var dailyCapacity = resource.DailyCapacity;
+        var dailyCapacity = parseFloat(resource.DailyCapacity) * noiseMultiplier * hoursInDay;
 
         for (var capacityIndex in capacities) {
-            capacities[capacityIndex] = capacities[capacityIndex] + parseInt(dailyCapacity);
+            capacities[capacityIndex] = capacities[capacityIndex] + dailyCapacity;
         }
 
         for (var exceptionIndex in resource.Exceptions) {
@@ -155,7 +161,8 @@ function GetDailyCapacities(team, dates) {
 
 function GetBurndownHistory() {
     var team = GetTeam();
-    var url = settings.DevStatsBurndownApi + "?sprint=" + encodeURI(team.Sprint);
+    var sprintSearch = CollateSprintText(team.Sprint, false);
+    var url = settings.DevStatsBurndownApi + "?sprint=" + encodeURI(sprintSearch);
 
     $.ajax({
         url: url,
@@ -182,7 +189,7 @@ function WaitForDataToLoad() {
         setTimeout(function () { WaitForDataToLoad() }, 1000);
 }
 
-function RecordCurrentOutstandingWork(sprint, today, workRemaining) {
+function RecordCurrentOutstandingWork(sprintSearch, today, workRemaining) {
     var today = new Date();
     var year = today.getFullYear();
     var month = today.getMonth() + 1;
@@ -191,7 +198,7 @@ function RecordCurrentOutstandingWork(sprint, today, workRemaining) {
     if (month < 10) month = "0" + month;
     if (day < 10) day = "0" + day;
 
-    var dataPackage = '{"Sprint":"' + sprint + '","Date":"' + year + '-' + month + '-' + day + 'T00:00:00.000Z","WorkRemaining":' + workRemaining + '}';
+    var dataPackage = '{"Sprint":"' + sprintSearch + '","Date":"' + year + '-' + month + '-' + day + 'T00:00:00.000Z","WorkRemaining":' + workRemaining + '}';
 
     var url = settings.DevStatsBurndownApi;
 
@@ -249,11 +256,11 @@ function GetToday() {
 function DrawChart(team, dates, capacity, workRemaining) {
     CreateChartContainer();
 
-    var today = GetToday();
+    var today = DateToString(GetToday());
     var fromLoc = 0;
     var toLoc = 0.5;
     var foundDatePosition = false;
-    var title = team.Sprint;
+    var title = CollateSprintText(team.Sprint, false);
     var lineWidth = 2;
 
     var urlLineWidth = getURLParameter("LineWidth");
@@ -336,4 +343,17 @@ function CreateChartContainer() {
 
     $("body").empty();
     $("body").append(markUp);
+}
+
+function CollateSprintText(sprints, includeBrackets) {
+    var collatedSprints = "";
+    var leftBrace = includeBrackets ? "{" : "";
+    var rightBrace = includeBrackets ? "}" : "";
+
+    for (var sprintIndex in sprints) {
+        collatedSprints += (sprintIndex > 0) ? ", " : "";
+        collatedSprints += leftBrace + sprints[sprintIndex] + rightBrace;
+    }
+
+    return collatedSprints;
 }

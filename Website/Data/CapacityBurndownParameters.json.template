@@ -1,19 +1,32 @@
 {
   "YouTrackRootUrl": "",
   "DevStatsBurndownApi": "",
-  "TaskTypes": [ "Task" ],
+  "TaskTypes": [ "Task", "Testing Task", "Rework Task" ],
   "WorkRemainingStates": [ "Submitted", "Designing", "Ready to Start", "In Progress" ],
-  "SprintStartDate": "2016-07-04",
-  "SprintDurationDays": "14",
+  "SprintStartDate": "2016-08-01",
+  "SprintDurationDays": 19,
+  "HoursInDay": 7.5,
+  "NoiseReduction": 0.7,
   "Teams": [
     {
-      "Team": "Team Name",
-      "Sprint": "Sprint Name",
+      "Team": "All",
+      "Sprint": [ "Team A Sprint", "Team B Sprint" ],
       "Resource": [
         {
-          "Name": "One",
-          "DailyCapacity": "6",
-          "Exceptions": [ "2016-07-11", "2016-07-12", "2016-07-13", "2016-07-14", "2016-07-15" ]
+          "Name": "John Doe",
+          "DailyCapacity": 0.8,
+          "Exceptions": [ "2016-08-22" ]
+        }
+      ]
+    },
+    {
+      "Team": "Team A",
+      "Sprint": [ "Team A Sprint" ],
+      "Resource": [
+        {
+          "Name": "John Doe",
+          "DailyCapacity": 0.8,
+          "Exceptions": [ "2016-08-22" ]
         }
       ]
     }
