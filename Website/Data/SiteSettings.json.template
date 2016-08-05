@@ -1,0 +1,28 @@
+﻿{
+  "YouTrackRootUrl": "",
+  "ScreenDuration": "60000",
+  "RefreshRate": "180000",
+  "Teams": [
+    {
+      "TeamName": "Team Name",
+      "Projects": [ "Project" ],
+      "SubSystems": [ "Sub System" ],
+      "Sprint": {
+        "Name": "Sprint",
+        "StartDate": "2016-03-08",
+        "DurationDays": "13"
+      }
+    }
+  ],
+  "Developers": [
+    {
+      "UserName": "JSmith",
+      "FullName": "John Smith"
+    }
+  ],
+  "BurndownTasks": [ "Task" ],
+  "DevLogTasks": [ "Task" ],
+  "DesigningStates": [ "Submitted", "Designing", "Ready to Start" ],
+  "CompletedStates": [ "Complete", "Released" ],
+  "UserStories": [ "User Story", "Defect" ]
+}

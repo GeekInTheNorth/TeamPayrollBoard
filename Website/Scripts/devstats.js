@@ -1,4 +1,5 @@
-﻿var youTrackIds = [];
+﻿var settings = undefined;
+var youTrackIds = [];
 var youTrackHeaders = [];
 var devStats = [];
 var companyYearSummaries = [];
@@ -530,10 +531,4 @@ function CompareDevStats(a, b) {
         return 1;
     else
         return 0;
-}
-
-function htmlEncode(value) {
-    //create a in-memory div, set it's inner text(which jQuery automatically encodes)
-    //then grab the encoded contents back out.  The div never exists on the page.
-    return $('<div/>').text(value).html();
 }
