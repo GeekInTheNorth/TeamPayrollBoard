@@ -52,11 +52,10 @@ function LoadHeadersFromYouTrack() {
     var apiUrl = settings.YouTrackRootUrl + "/rest/issue?filter=";
     var filterQuery = "Type: {User Story}, {Bug}, {Defect}";
 
+    filterQuery += " Sprint: ";
     for (var teamIndex in settings.Teams) {
         if (teamIndex > 0)
             filterQuery += ", ";
-        else
-            filterQuery += " Sprint: ";
 
         filterQuery += "{" + settings.Teams[teamIndex].Sprint.Name + "}";
     }
@@ -190,7 +189,7 @@ function AnalyzeYouTrackIssueData(youTrackData, issueId, issueType, issueTitle, 
             if (field.name === "State") taskState = field.value[0];
         }
 
-        if (newReportItem.DevContributors.indexOf(taskOwner) === -1 && taskOwner !== "Unknown")
+        if (newReportItem.DevContributors.indexOf(taskOwner) === -1 && taskOwner !== "Unknown" && taskOwner !== "I'm Blocked")
             newReportItem.DevContributors.push(taskOwner);
 
         if (allowedStates.indexOf(taskState) === -1)
@@ -212,7 +211,9 @@ function AnalyzeYouTrackIssueData(youTrackData, issueId, issueType, issueTitle, 
         }
     }
 
-    if (newReportItem.State === "In Progress" && newReportItem.DevRemaining === 0) {
+    var adjustableStates = ["In Progress", "Done"];
+
+    if (adjustableStates.indexOf(newReportItem.State) > -1 && newReportItem.DevRemaining === 0) {
         if (preMergePending) newReportItem.State = "Pre-Merge Testing";
         else if (poReviewPending) newReportItem.State = "PO Review";
         else if (mergePending) newReportItem.State = "Awaiting Merge";
@@ -267,7 +268,11 @@ function DisplayResults() {
             owners += reportItem.DevContributors[ownerIndex];
         }
 
-        markUp += "<tr>";
+        if (reportItem.State === "Complete")
+            markUp += "<tr style='background-color: green; color: white;'>";
+        else
+            markUp += "<tr>";
+
         markUp += "<td class='numeric-cell'><a href='" + settings.YouTrackRootUrl + "/issue/" + reportItem.Id + "' target='_blank'>" + reportItem.Id + "</a></td>";
         markUp += "<td class='text-cell'>" + reportItem.Type + "</td>";
         markUp += "<td class='text-cell'>" + htmlEncode(reportItem.Title) + "</td>";
