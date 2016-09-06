@@ -50,7 +50,7 @@ function LoadSettings() {
 
 function LoadHeadersFromYouTrack() {
     var apiUrl = settings.YouTrackRootUrl + "/rest/issue?filter=";
-    var filterQuery = "Type: {User Story}, {Bug}, {Defect}";
+    var filterQuery = "Type: {User Story}, {Bug}, {Defect} State: -Closed";
 
     filterQuery += " Sprint: ";
     for (var teamIndex in settings.Teams) {
