@@ -1,8 +1,5 @@
 {
-  "YouTrackRootUrl": "",
   "DevStatsBurndownApi": "",
-  "TaskTypes": [ "Task", "Testing Task", "Rework Task" ],
-  "WorkRemainingStates": [ "Submitted", "Designing", "Ready to Start", "In Progress" ],
   "SprintStartDate": "2016-08-01",
   "SprintDurationDays": 19,
   "HoursInDay": 7.5,

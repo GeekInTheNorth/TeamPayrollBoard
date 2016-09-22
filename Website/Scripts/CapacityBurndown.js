@@ -1,9 +1,7 @@
 ﻿var settings = undefined;
 var burndownHistory = undefined;
 var youTrackItems = [];
-var youTrackComplete = false;
 var devStatsComplete = false;
-var workRemainingToday = 0;
 
 $(document).ready(function () {
     SetRefresh();
@@ -25,43 +23,6 @@ function LoadSettings() {
         success: function (jsonData) {
             settings = jsonData;
             GetBurndownHistory();
-            GetYouTrackData();
-            WaitForDataToLoad();
-        }
-    });
-}
-
-function GetYouTrackData() {
-    var team = GetTeam();
-
-    var url = "Sprint: " + CollateSprintText(team.Sprint, true);
-
-    url += " Type: ";
-    for (var taskIndex in settings.TaskTypes) {
-        if (taskIndex > 0)
-            url += ", ";
-        url += "{" + settings.TaskTypes[taskIndex] + "}";
-    }
-
-    url += " State: ";
-    for (var wrsIndex in settings.WorkRemainingStates) {
-        if (wrsIndex > 0)
-            url += ", ";
-        url += "{" + settings.WorkRemainingStates[wrsIndex] + "}";
-    }
-
-    url += " order by: updated desc";
-    url = encodeURI(url);
-    url = settings.YouTrackRootUrl + "/rest/issue?filter=" + url + "&max=500";
-
-    $.ajax({
-        url: url,
-        dataType: "json",
-        headers: {
-            accept: 'application/json'
-        },
-        success: function (jsonData) {
-            AnalyseYouTrackData(team, jsonData);
         }
     });
 }
@@ -79,38 +40,6 @@ function GetTeam() {
         teamDetails = settings.Teams[0]
 
     return teamDetails;
-}
-
-function AnalyseYouTrackData(team, youTrackData) {
-    var totalEstimate = 0;
-    
-    workRemainingToday = 0;
-
-    for (var taskIndex in youTrackData.issue) {
-        var task = youTrackData.issue[taskIndex];
-        var type = "Unknown";
-        var state = "Unknown";
-        var estimate = 0;
-        var workRemaining = 0;
-
-        for (var fieldIndex in task.field) {
-            var field = task.field[fieldIndex];
-
-            if (field.name === "State") state = field.value[0];
-            if (field.name === "Estimate") estimate = parseInt(field.value[0]);
-            if (field.name === "WorkRemaining") workRemaining = parseInt(field.value[0]);
-        }
-
-        if (state !== "In Progress" && estimate >= 0 && workRemaining === 0)
-            workRemaining = estimate;
-
-        workRemainingToday += workRemaining;
-    }
-
-    var today = GetToday();
-    var sprintSearch = CollateSprintText(team.Sprint, false);
-    RecordCurrentOutstandingWork(sprintSearch, today, workRemainingToday);
-    youTrackComplete = true;
 }
 
 function GetDateArray() {
@@ -172,44 +101,8 @@ function GetBurndownHistory() {
             accept: 'application/json'
         },
         success: function (jsonData) {
-            AnalyzeBurndownHistory(jsonData);
-        }
-    });
-}
-
-function AnalyzeBurndownHistory(history) {
-    burndownHistory = history;
-    devStatsComplete = true;
-}
-
-function WaitForDataToLoad() {
-    if (youTrackComplete && devStatsComplete)
-        CalculateBurndown();
-    else
-        setTimeout(function () { WaitForDataToLoad() }, 1000);
-}
-
-function RecordCurrentOutstandingWork(sprintSearch, today, workRemaining) {
-    var today = new Date();
-    var year = today.getFullYear();
-    var month = today.getMonth() + 1;
-    var day = today.getDate();
-
-    if (month < 10) month = "0" + month;
-    if (day < 10) day = "0" + day;
-
-    var dataPackage = '{"Sprint":"' + sprintSearch + '","Date":"' + year + '-' + month + '-' + day + 'T00:00:00.000Z","WorkRemaining":' + workRemaining + '}';
-
-    var url = settings.DevStatsBurndownApi;
-
-    $.ajax({
-        type: "POST",
-        url: url,
-        data: dataPackage,
-        contentType: "application/json; charset=utf-8",
-        dataType: "json",
-        success: function (jsonData) {
-            // TODO
+            burndownHistory = jsonData;
+            CalculateBurndown();
         }
     });
 }
@@ -219,13 +112,14 @@ function CalculateBurndown() {
     var dates = GetDateArray();
     var dailyCapacities = GetDailyCapacities(team, dates);
     var today = GetToday();
+    var latestRemainingCapacity = burndownHistory.Days[burndownHistory.Days.length - 1].WorkRemaining;
 
     var remainingCapacities = [];
     var remainingWork = [];
     
     for (var dateIndex in dates) {
         remainingCapacities.push(0);
-        remainingWork.push(workRemainingToday);
+        remainingWork.push(latestRemainingCapacity);
 
         for (var capacityIndex in dailyCapacities) {
             if (parseInt(capacityIndex) <= parseInt(dateIndex)) continue;
