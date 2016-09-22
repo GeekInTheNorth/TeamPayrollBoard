@@ -250,9 +250,7 @@ function PostWorkRemainingForSprint(sprintName, workRemaining) {
     if (month < 10) month = "0" + month;
     if (day < 10) day = "0" + day;
 
-    var sprintToPost = "Test - " + sprintName;
-
-    var dataPackage = '{"Sprint":"' + sprintToPost + '","Date":"' + year + '-' + month + '-' + day + 'T00:00:00.000Z","WorkRemaining":' + workRemaining + '}';
+    var dataPackage = '{"Sprint":"' + sprintName + '","Date":"' + year + '-' + month + '-' + day + 'T00:00:00.000Z","WorkRemaining":' + workRemaining + '}';
 
     var postUrl = settings.DevStatsApiRoot + "/burndown";
 
