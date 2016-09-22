@@ -1,0 +1,18 @@
+﻿{
+  "YouTrackRootUrl": "",
+  "DevStatsApiRoot": "",
+  "RedirectOnCompleteUrl": "",
+  "DefectTracking": {
+    "UpdateRange": "Week",
+    "YouTrackProject": "",
+    "InternalType": "",
+    "ExternalType": "",
+    "ReworkType": ""
+  },
+  "SprintWorkRemaining": {
+    "YouTrackProject": "",
+    "Sprints": [ "" ],
+    "WorkRemainingStates": [ "" ],
+    "TaskTypes": [ "" ]
+  }
+}
