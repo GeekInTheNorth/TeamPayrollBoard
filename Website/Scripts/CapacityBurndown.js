@@ -112,7 +112,10 @@ function CalculateBurndown() {
     var dates = GetDateArray();
     var dailyCapacities = GetDailyCapacities(team, dates);
     var today = GetToday();
-    var latestRemainingCapacity = burndownHistory.Days[burndownHistory.Days.length - 1].WorkRemaining;
+    var latestRemainingCapacity = 0;
+
+    if (burndownHistory.Days.length > 0)
+        latestRemainingCapacity = burndownHistory.Days[burndownHistory.Days.length - 1].WorkRemaining;
 
     var remainingCapacities = [];
     var remainingWork = [];
