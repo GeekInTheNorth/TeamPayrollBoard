@@ -268,7 +268,7 @@ function DisplayResults() {
             owners += reportItem.DevContributors[ownerIndex];
         }
 
-        if (reportItem.State === "Complete")
+        if (reportItem.State === "Complete" || reportItem.State === "Closed" || reportItem.State === "Released")
             markUp += "<tr style='background-color: green; color: white;'>";
         else
             markUp += "<tr>";
