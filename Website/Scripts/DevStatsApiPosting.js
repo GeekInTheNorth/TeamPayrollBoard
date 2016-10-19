@@ -1,6 +1,7 @@
 ﻿var settings = undefined;
 var workRemainingPosts = 0;
 var workRemainingPostsCompleted = 0;
+var attemptNumber = 1;
 
 $(document).ready(function () {
     LoadSettings();
@@ -46,6 +47,9 @@ function GetDefectTrackingData() {
         },
         success: function (jsonData) {
             PostDefectTrackingData(jsonData);
+        },
+        error: function () {
+            DisplayError();
         }
     });
 }
@@ -174,6 +178,9 @@ function GetWorkRemainingData() {
         },
         success: function (jsonData) {
             AnalyzeWorkRemainingData(jsonData);
+        },
+        error: function () {
+            DisplayError();
         }
     });
 }
@@ -231,6 +238,7 @@ function GetSprintSummariesWithZeros() {
 function PostWorkRemaining(sprintSummaries) {
     DisplayMessage("Posting Work Remaining Data to DevStats...");
     workRemainingPosts = sprintSummaries.length;
+    workRemainingPostsCompleted = 0;
 
     for (var sprintSummaryIndex in sprintSummaries) {
         var sprintSummary = sprintSummaries[sprintSummaryIndex];
@@ -280,4 +288,14 @@ function WaitToFinish() {
     }
     else
         setTimeout(function () { WaitToFinish() }, 1000);
+}
+
+function DisplayError() {
+    attemptNumber = attemptNumber + 1;
+
+    var errorMessage = "Something went wrong, attempt number " + attemptNumber + " will commence shortly";
+
+    DisplayMessage(errorMessage);
+
+    setTimeout(function () { GetDefectTrackingData(); }, 60000);
 }
