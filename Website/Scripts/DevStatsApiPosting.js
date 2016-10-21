@@ -19,7 +19,11 @@ function LoadSettings() {
         },
         success: function (jsonData) {
             settings = jsonData;
-            GetDefectTrackingData();
+
+            if (IsAllowedToOperate())
+                GetDefectTrackingData();
+            else
+                window.location.replace(settings.RedirectOnCompleteUrl);
         }
     });
 }
@@ -298,4 +302,15 @@ function DisplayError() {
     DisplayMessage(errorMessage);
 
     setTimeout(function () { GetDefectTrackingData(); }, 60000);
+}
+
+function IsAllowedToOperate() {
+    var now = new Date();
+    var dayOfWeek = now.getDay();
+    var hourOfDay = now.getHours();
+
+    if ((dayOfWeek === 0) || (dayOfWeek === 1) || (hourOfDay < 7) || (hourOfDay > 17))
+        return false;
+
+    return true;
 }
