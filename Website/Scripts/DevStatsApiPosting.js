@@ -309,7 +309,7 @@ function IsAllowedToOperate() {
     var dayOfWeek = now.getDay();
     var hourOfDay = now.getHours();
 
-    if ((dayOfWeek === 0) || (dayOfWeek === 1) || (hourOfDay < 7) || (hourOfDay > 17))
+    if ((dayOfWeek === 0) || (dayOfWeek === 6) || (hourOfDay < 7) || (hourOfDay > 17))
         return false;
 
     return true;
