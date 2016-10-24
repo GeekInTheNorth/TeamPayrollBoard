@@ -9,7 +9,7 @@ $(document).ready(function () {
 });
 
 function SetRefresh() {
-    setTimeout(function () { window.location.reload(); }, 180000);
+    setTimeout(function () { window.location.reload(); }, 300000);
 }
 
 function LoadSettings() {
