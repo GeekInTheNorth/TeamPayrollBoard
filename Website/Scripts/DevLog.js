@@ -133,11 +133,33 @@ function SortByTeamAndDate(a, b) {
         return 0;
 }
 
+function SortByFullName(a, b) {
+    var aNameParts = a.FullName.split(" ");
+    var bNameParts = b.FullName.split(" ");
+
+    aForeName = aNameParts[0];
+    aSurname = aNameParts[aNameParts.length - 1];
+    
+    bForeName = bNameParts[0];
+    bSurname = bNameParts[bNameParts.length - 1];
+
+    if (aSurname < bSurname)
+        return -1;
+    else if (aSurname > bSurname)
+        return 1;
+    else if (aForeName < bForeName)
+        return -1;
+    else if (aForeName > bForeName)
+        return 1;
+    else
+        return 0;
+}
+
 function DisplayDataByDeveloper() {
     $("body").empty();
     SetHeader();
 
-    var summaries = GetDevBreakdown("ALL");
+    var summaries = GetDevBreakdown("ALL").sort(SortByFullName);
 
     for (var summaryIndex in summaries){
         var summaryItem = summaries[summaryIndex];
