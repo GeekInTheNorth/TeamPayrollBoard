@@ -43,7 +43,7 @@ function LoadSettings() {
 }
 
 function LoadHeadersFromYouTrack() {
-    var apiUrl = settings.YouTrackRootUrl + "/rest/issue?filter=project%3ACAS+Type%3A+%7BUser+Story%7D%2C+Defect+State%3A+Complete+%2C+Released+Subsystem%3A+-UI+%2C+-%7BUI+(iPad)%7D+order+by%3A+%7Bissue+id%7D+asc&max=500";
+    var apiUrl = settings.YouTrackRootUrl + "/rest/issue?filter=project%3ACAS%2C+OCT+Type%3A+%7BUser+Story%7D%2C+Defect%2C+Bug+State%3A+Complete+%2C+Released+resolved+date%3A+2016-05+..+Today++order+by%3A+%7Bissue+id%7D+asc&max=500";
 
     $("body").append("<div class='progress'>Loading Headers from You Track.</div>");
 
@@ -89,6 +89,9 @@ function StoreYouTrackHeaders(youTrackData) {
             if (field.name === "Risk") header.Risk = parseInt(field.value[0]);
             if (field.name === "resolved") header.CompanyYear = ConvertYouTrackDateToCompanyYear(field.value);
         }
+
+        if (header.Type == "Bug")
+            header.Type = "Defect";
 
         youTrackHeaders.push(header);
     }
@@ -230,37 +233,19 @@ function DisplayResults() {
 }
 
 function DisplayFilter() {
-    var devNames = [];
+    var developers = settings.Developers.sort(SortByFullName);
     var companyYears = [];
-
-    for (var devStatIndex in devStats) {
-        var devStat = devStats[devStatIndex];
-
-        if (companyYears.indexOf(devStat.CompanyYear) === -1)
-            companyYears.push(devStat.CompanyYear);
-
-        for (var devIndex in devStat.DevContributors) {
-            var dev = devStat.DevContributors[devIndex];
-
-            if (devNames.indexOf(dev.FullName) > -1) continue;
-
-            devNames.push(dev.FullName);
-        }
-    }
-
-    devNames.sort();
-    companyYears.sort();
-    companyYears.reverse();
+    companyYears.push(2016);
 
     var markUp = "<div class='filter-bar'>";
     markUp += "Developer:&nbsp;<select id='dev-filter' class='devstat-filter'>";
 
-    for (var devNameIndex in devNames) {
-        var devName = devNames[devNameIndex];
+    for (var devIndex in developers) {
+        var developer = developers[devIndex];
 
-        if (devName === "Unknown" || devName === "I'm Blocked") continue;
+        if (developer.ResourceType !== "Developer") continue;
 
-        markUp += "<option value='" + devName + "'>" + devName + "</option>";
+        markUp += "<option value='" + developer.FullName + "'>" + developer.FullName + "</option>";
     }
 
     markUp += "</select>";
@@ -280,11 +265,13 @@ function DisplayFilter() {
     }
 
     markUp += "</select>";
+    markUp += "&nbsp;Include Not Exceeded:&nbsp;";
+    markUp += "<input type='checkbox' id='include-not-exceeded' class='devstat-filter' checked />"
     markUp += "</div>";
 
     $("body").append(markUp);
 
-    $("select.devstat-filter").change(function () {
+    $(".devstat-filter").change(function () {
         DisplayDevStats();
     });
 
@@ -295,10 +282,16 @@ function DisplayDevStats() {
     var selectedDevName = $("select#dev-filter").val();
     var selectedType = $("select#type-filter").val();
     var selectedCompanyYear = $("select#company-year-filter").val();
+    var includeNotExceeded = $("input#include-not-exceeded").is(":checked");
     var totalDefects = 0.0;
     var defectReturn = 0.0;
     var totalUserStories = 0.0;
     var userStoryReturn = 0.0;
+    var totalEstimatedForYear = 0.0;
+    var totalEstimatedForYearForDev = 0.0;
+    var totalActualForYear = 0.0;
+    var totalActualForYearForDev = 0.0;
+    var numberExceedingRework = 0;
     companyYearSummaries = [];
 
     $("table#dev-breakdown").remove();
@@ -314,8 +307,8 @@ function DisplayDevStats() {
     markUp += "<th class='text-cell'>Actual</th>";
     markUp += "<th class='numeric-cell'>Contribution</th>";
     markUp += "<th class='numeric-cell'>Reworks</th>";
-    markUp += "<th class='numeric-cell'>Max Reworks</th>";
-    markUp += "<th class='text-cell'>Reworks Exceeded</th>";
+    markUp += "<th class='numeric-cell'>Rework Limit</th>";
+    markUp += "<th class='text-cell'>Rework Limit Exceeded</th>";
     markUp += "</tr>";
 
     devStats.sort(CompareDevStats);
@@ -332,22 +325,23 @@ function DisplayDevStats() {
                 var contribution = (dev.TotalActualDev / devStat.TotalActualDev);
                 var contributionPercentage = 100.0 * contribution;
                 var maximumReworks = Math.round(devStat.TotalEstimatedDev / 10);
-                var exceedsReworks = false;
-                
-                if (devStat.Risk === "High") maximumReworks = maximumReworks * 2;
-                if (devStat.Risk === "Low") maximumReworks = maximumReworks / 2;
-
-                exceedsReworks = (maximumReworks < devStat.NumberOfReworks);
+                var exceedsReworks = (maximumReworks < devStat.NumberOfReworks);
 
                 UpdateCompanyYear(devStat.Type, devStat.CompanyYear, contribution, exceedsReworks);
 
                 if (selectedType === "User Story" && devStat.Type !== "User Story") continue;
                 if (selectedType === "Defect" && devStat.Type === "User Story") continue;
                 if (selectedCompanyYear !== "All" && devStat.CompanyYear !== parseInt(selectedCompanyYear)) continue;
+                if (!includeNotExceeded && !exceedsReworks) continue;
+
+                totalEstimatedForYearForDev += dev.TotalEstimatedDev;
+                totalActualForYearForDev += dev.TotalActualDev;
+                if (exceedsReworks)
+                    numberExceedingRework += 1;
 
                 markUp += "<tr>";
                 markUp += "<td class='text-cell'>" + devStat.CompanyYear + "</td>";
-                markUp += "<td class='numeric-cell'><a href='" + settings.YouTrackRootUrl + "/issue/" + devStat.Id + "' target='_blank'>" + devStat.Id + "</a></td>";
+                markUp += "<td class='numeric-cell' nowrap><a href='" + settings.YouTrackRootUrl + "/issue/" + devStat.Id + "' target='_blank'>" + devStat.Id + "</a></td>";
                 markUp += "<td class='text-cell'>" + devStat.Type + "</td>";
                 markUp += "<td class='text-cell'>" + htmlEncode(devStat.Title) + "</td>";                
                 markUp += "<td class='text-cell'>" + dev.TotalEstimatedDev + " of " + devStat.TotalEstimatedDev + "</td>";
@@ -365,6 +359,15 @@ function DisplayDevStats() {
             }
         }
     }
+
+    // Footer
+    markUp += "<tr>";
+    markUp += "<th class='text-cell' colspan='4'>Developer Totals</th>";
+    markUp += "<th class='text-cell'>" + totalEstimatedForYearForDev + "</th>";
+    markUp += "<th class='text-cell'>" + totalActualForYearForDev + "</th>";
+    markUp += "<th class='numeric-cell' colspan='3'>&nbsp;</th>";
+    markUp += "<th class='text-cell'>" + numberExceedingRework + "</th>";
+    markUp += "</tr>";
 
     markUp += "</table>";
 
@@ -390,14 +393,18 @@ function GetSummaryMarkup() {
     summaryMarkUp += "<th class='numeric-cell'>User Story Return</th>";
     summaryMarkUp += "<th class='numeric-cell'>Defect Contribution</th>";
     summaryMarkUp += "<th class='numeric-cell'>Defect Return</th>";
+    summaryMarkUp += "<th class='numeric-cell'>Overall Contribution</th>";
+    summaryMarkUp += "<th class='numeric-cell'>Overall Return</th>";
     summaryMarkUp += "</tr>";
 
     companyYearSummaries.sort(CompareCompanyYearSummaries);
 
-    var totalUserStories = 0;
-    var totalUserStoryReturn = 0;
-    var totalDefects = 0;
-    var totalDefectReturn = 0;
+    var totalUserStories = 0.0;
+    var totalUserStoryReturn = 0.0;
+    var totalDefects = 0.0;
+    var totalDefectReturn = 0.0;
+    var totalEffort = 0.0;
+    var totalEffortReturn = 0.0;
 
     for (var companyYearIndex in companyYearSummaries) {
         var companyYearSummary = companyYearSummaries[companyYearIndex];
@@ -406,12 +413,18 @@ function GetSummaryMarkup() {
         totalUserStoryReturn += companyYearSummary.UserStoryReturn;
         totalDefects += companyYearSummary.TotalDefects;
         totalDefectReturn += companyYearSummary.DefectReturn;
+        totalEffort += companyYearSummary.TotalUserStories;
+        totalEffort += companyYearSummary.TotalDefects;
+        totalEffortReturn += companyYearSummary.UserStoryReturn;
+        totalEffortReturn += companyYearSummary.DefectReturn;
 
         var userStoryReturnPercentage = 100.0 * (companyYearSummary.UserStoryReturn / companyYearSummary.TotalUserStories);
         var defectReturnPercentage = 100.0 * (companyYearSummary.DefectReturn / companyYearSummary.TotalDefects);
+        var effortReturnPercentage = 100.0 * ((companyYearSummary.UserStoryReturn + companyYearSummary.DefectReturn) / (companyYearSummary.TotalUserStories + companyYearSummary.TotalDefects));
 
         if (isNaN(userStoryReturnPercentage)) userStoryReturnPercentage = 0;
         if (isNaN(defectReturnPercentage)) defectReturnPercentage = 0;
+        if (isNaN(effortReturnPercentage)) effortReturnPercentage = 0;
 
         summaryMarkUp += "<tr>";
         summaryMarkUp += "<td class='text-cell'>" + companyYearSummary.CompanyYear + "</td>";
@@ -419,14 +432,18 @@ function GetSummaryMarkup() {
         summaryMarkUp += "<td class='numeric-cell'>" + FormatNumberToString(userStoryReturnPercentage) + "%</td>";
         summaryMarkUp += "<td class='numeric-cell'>" + FormatNumberToString(companyYearSummary.TotalDefects) + "</td>";
         summaryMarkUp += "<td class='numeric-cell'>" + FormatNumberToString(defectReturnPercentage) + "%</td>";
+        summaryMarkUp += "<td class='numeric-cell'>" + FormatNumberToString(companyYearSummary.TotalUserStories + companyYearSummary.TotalDefects) + "</td>";
+        summaryMarkUp += "<td class='numeric-cell'>" + FormatNumberToString(effortReturnPercentage) + "%</td>";
         summaryMarkUp += "</tr>";
     }
 
     var totalUserStoryReturnPercentage = 100.0 * (totalUserStoryReturn / totalUserStories);
     var totalDefectReturnPercentage = 100.0 * (totalDefectReturn / totalDefects);
+    var totalEffortReturnPercentage = 100.0 * (totalEffortReturn / totalEffort);
 
     if (isNaN(totalUserStoryReturnPercentage)) totalUserStoryReturnPercentage = 0;
     if (isNaN(totalDefectReturnPercentage)) totalDefectReturnPercentage = 0;
+    if (isNaN(totalEffortReturnPercentage)) totalEffortReturnPercentage = 0;
 
     summaryMarkUp += "<tr>";
     summaryMarkUp += "<th class='text-cell'>Overall</th>";
@@ -434,6 +451,8 @@ function GetSummaryMarkup() {
     summaryMarkUp += "<th class='numeric-cell'>" + FormatNumberToString(totalUserStoryReturnPercentage) + "%</th>";
     summaryMarkUp += "<th class='numeric-cell'>" + FormatNumberToString(totalDefects) + "</th>";
     summaryMarkUp += "<th class='numeric-cell'>" + FormatNumberToString(totalDefectReturnPercentage) + "%</th>";
+    summaryMarkUp += "<th class='numeric-cell'>" + FormatNumberToString(totalEffort) + "</th>";
+    summaryMarkUp += "<th class='numeric-cell'>" + FormatNumberToString(totalEffortReturnPercentage) + "%</th>";
     summaryMarkUp += "</tr>";
 
     summaryMarkUp += "</table>";
@@ -528,6 +547,28 @@ function CompareDevStats(a, b) {
     else if (issueIdA > issueIdB)
         return -1;
     else if (issueIdA < issueIdB)
+        return 1;
+    else
+        return 0;
+}
+
+function SortByFullName(a, b) {
+    var aNameParts = a.FullName.split(" ");
+    var bNameParts = b.FullName.split(" ");
+
+    aForeName = aNameParts[0];
+    aSurname = aNameParts[aNameParts.length - 1];
+
+    bForeName = bNameParts[0];
+    bSurname = bNameParts[bNameParts.length - 1];
+
+    if (aSurname < bSurname)
+        return -1;
+    else if (aSurname > bSurname)
+        return 1;
+    else if (aForeName < bForeName)
+        return -1;
+    else if (aForeName > bForeName)
         return 1;
     else
         return 0;

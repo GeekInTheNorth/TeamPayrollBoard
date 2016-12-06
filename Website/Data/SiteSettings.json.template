@@ -17,7 +17,13 @@
   "Developers": [
     {
       "UserName": "JSmith",
-      "FullName": "John Smith"
+      "FullName": "John Smith",
+      "ResourceType": "Developer"
+    },
+    {
+      "UserName": "DSmith",
+      "FullName": "David Smith",
+      "ResourceType": "QA Analyst"
     }
   ],
   "BurndownTasks": [ "Task" ],
