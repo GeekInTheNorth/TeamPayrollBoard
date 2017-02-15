@@ -107,10 +107,10 @@ function PostDefectTrackingData(youTrackData) {
             accept: 'application/json'
         },
         success: function (jsonData) {
-            GetWorkRemainingData();
+            ShowAllIsDone();
         },
         error: function (jsonData) {
-            GetWorkRemainingData();
+            ShowAllIsDone();
         }
     });
 }
@@ -144,156 +144,6 @@ function DisplayMessage(messageText) {
     $("div.message-banner").append(messageText);
 }
 
-function GetWorkRemainingData() {
-    DisplayMessage("Polling YouTrack for work remaining data");
-
-    var dataUrl = "Project: {" + settings.SprintWorkRemaining.YouTrackProject + "}";
-
-    dataUrl += " Sprint: ";
-    for (var sprintIndex in settings.SprintWorkRemaining.Sprints) {
-        if (sprintIndex > 0)
-            dataUrl += ", ";
-        dataUrl += "{" + settings.SprintWorkRemaining.Sprints[sprintIndex] + "}";
-    }
-
-    dataUrl += " State: ";
-    for (var stateIndex in settings.SprintWorkRemaining.WorkRemainingStates) {
-        if (stateIndex > 0)
-            dataUrl += ", ";
-        dataUrl += "{" + settings.SprintWorkRemaining.WorkRemainingStates[stateIndex] + "}";
-    }
-
-    dataUrl += " Type: ";
-    for (var typeIndex in settings.SprintWorkRemaining.TaskTypes) {
-        if (typeIndex > 0)
-            dataUrl += ", ";
-        dataUrl += "{" + settings.SprintWorkRemaining.TaskTypes[typeIndex] + "}";
-    }
-
-    dataUrl += " order by: {issue id} desc";
-
-    dataUrl = settings.YouTrackRootUrl + "/rest/issue?filter=" + encodeURI(dataUrl) + "&max=500";
-
-    $.ajax({
-        url: dataUrl,
-        dataType: "json",
-        headers: {
-            accept: 'application/json'
-        },
-        success: function (jsonData) {
-            AnalyzeWorkRemainingData(jsonData);
-        },
-        error: function () {
-            DisplayError();
-        }
-    });
-}
-
-function AnalyzeWorkRemainingData(youTrackData) {
-    DisplayMessage("Analyzing Work Remaining Data...");
-    var sprintSummaries = GetSprintSummariesWithZeros();
-
-    for (var taskIndex in youTrackData.issue) {
-        var task = youTrackData.issue[taskIndex];
-        var type = "Unknown";
-        var state = "Unknown";
-        var sprint = "Unknown";
-        var estimate = 0;
-        var workRemaining = 0;
-
-        for (var fieldIndex in task.field) {
-            var field = task.field[fieldIndex];
-
-            if (field.name === "State") state = field.value[0];
-            if (field.name === "Estimate") estimate = parseInt(field.value[0]);
-            if (field.name === "WorkRemaining") workRemaining = parseInt(field.value[0]);
-            if (field.name === "Sprint") sprint = field.value[0];
-        }
-
-        if (state !== "In Progress" && estimate >= 0 && workRemaining === 0)
-            workRemaining = estimate;
-
-        for (var sprintSummaryIndex in sprintSummaries) {
-            var sprintSummary = sprintSummaries[sprintSummaryIndex];
-            if (sprintSummary.Name === sprint)
-            {
-                sprintSummary.WorkRemaining += workRemaining
-                break;
-            }
-        }
-    }
-
-    PostWorkRemaining(sprintSummaries);
-}
-
-function GetSprintSummariesWithZeros() {
-    var sprintSummaries = [];
-
-    for (var sprintIndex in settings.SprintWorkRemaining.Sprints) {
-        var sprintSummary = new Object();
-        sprintSummary.Name = settings.SprintWorkRemaining.Sprints[sprintIndex];
-        sprintSummary.WorkRemaining = 0;
-        sprintSummaries.push(sprintSummary);
-    }
-
-    return sprintSummaries;
-}
-
-function PostWorkRemaining(sprintSummaries) {
-    DisplayMessage("Posting Work Remaining Data to DevStats...");
-    workRemainingPosts = sprintSummaries.length;
-    workRemainingPostsCompleted = 0;
-
-    for (var sprintSummaryIndex in sprintSummaries) {
-        var sprintSummary = sprintSummaries[sprintSummaryIndex];
-        
-        PostWorkRemainingForSprint(sprintSummary.Name, sprintSummary.WorkRemaining);
-    }
-
-    WaitToFinish();
-}
-
-function PostWorkRemainingForSprint(sprintName, workRemaining) {
-    var today = new Date();
-    var year = today.getFullYear();
-    var month = today.getMonth() + 1;
-    var day = today.getDate();
-
-    if (month < 10) month = "0" + month;
-    if (day < 10) day = "0" + day;
-
-    var dataPackage = '{"Sprint":"' + sprintName + '","Date":"' + year + '-' + month + '-' + day + 'T00:00:00.000Z","WorkRemaining":' + workRemaining + '}';
-
-    var postUrl = settings.DevStatsApiRoot + "/burndown";
-
-    $.ajax({
-        type: "POST",
-        url: postUrl,
-        data: dataPackage,
-        contentType: "application/json; charset=utf-8",
-        dataType: "json",
-        success: function (jsonData) {
-            workRemainingPostsCompleted++;
-        },
-        error: function (jsonData) {
-            workRemainingPostsCompleted++;
-        }
-    });
-}
-
-function WaitToFinish() {
-    if (workRemainingPosts === workRemainingPostsCompleted){
-        DisplayMessage("All tasks have been completed.");
-
-        var redirectUrl = settings.RedirectOnCompleteUrl;
-
-        if (redirectUrl !== undefined && redirectUrl !== "")
-            setTimeout(function () { window.location.replace(redirectUrl); }, 10000);
-    }
-    else
-        setTimeout(function () { WaitToFinish() }, 1000);
-}
-
 function DisplayError() {
     attemptNumber = attemptNumber + 1;
 
@@ -313,4 +163,13 @@ function IsAllowedToOperate() {
         return false;
 
     return true;
+}
+
+function ShowAllIsDone() {
+    DisplayMessage("All tasks have been completed.");
+
+    var redirectUrl = settings.RedirectOnCompleteUrl;
+
+    if (redirectUrl !== undefined && redirectUrl !== "")
+        setTimeout(function () { window.location.replace(redirectUrl); }, 10000);
 }

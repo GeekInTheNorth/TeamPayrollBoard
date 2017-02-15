@@ -1,6 +1,7 @@
-﻿var settings = undefined;
+﻿var apiRoot = "http://cascadedevstats.azurewebsites.net/api/";
+var youTrackRoot = "http://youtrack:9111";
+var settings = undefined;
 var burndownHistory = undefined;
-var youTrackItems = [];
 var devStatsComplete = false;
 
 $(document).ready(function () {
@@ -13,41 +14,34 @@ function SetRefresh() {
 }
 
 function LoadSettings() {
+    var podName = getURLParameter("team", true);
+    var sprintName = getURLParameter("sprint", true);
+
+    var url = apiRoot + "Sprint?pod=" + encodeURI(podName);
+
+    if (sprintName != null && sprintName != "")
+        url += "&sprint=" + encodeURI(sprintName)
+
     $.ajax({
         type: "Get",
-        url: "./Data/CapacityBurndownParameters.json",
+        url: url,
         dataType: "json",
         headers: {
             accept: 'application/json'
         },
         success: function (jsonData) {
             settings = jsonData;
-            GetBurndownHistory();
+            GetWorkRemainingData();
         }
     });
-}
-
-function GetTeam() {
-    var teamName = getURLParameter("Team");
-    var teamDetails = undefined;
-
-    for (var teamLocation in settings.Teams) {
-        if (teamName === settings.Teams[teamLocation].Team)
-            teamDetails = settings.Teams[teamLocation];
-    }
-
-    if (teamDetails === undefined)
-        teamDetails = settings.Teams[0]
-
-    return teamDetails;
 }
 
 function GetDateArray() {
     var dates = [];
     var loop = 0;
 
-    while (dates.length < settings.SprintDurationDays) {
-        var thisDate = new Date(settings.SprintStartDate);
+    while (dates.length < settings.DurationDays) {
+        var thisDate = new Date(settings.StartDate);
         thisDate.setDate(thisDate.getDate() + loop);
 
         if ((thisDate.getDay() !== 0) && (thisDate.getDay() !== 6))
@@ -59,39 +53,8 @@ function GetDateArray() {
     return dates;
 }
 
-function GetDailyCapacities(team, dates) {
-    var capacities = [];
-    var hoursInDay = parseFloat(settings.HoursInDay);
-    var noiseMultiplier = parseFloat(settings.NoiseReduction);
-
-    for (var dateIndex in dates) {
-        capacities.push(0);
-    }
-
-    for (var resourceIndex in team.Resource) {
-        var resource = team.Resource[resourceIndex];
-        var dailyCapacity = parseFloat(resource.DailyCapacity) * noiseMultiplier * hoursInDay;
-
-        for (var capacityIndex in capacities) {
-            capacities[capacityIndex] = capacities[capacityIndex] + dailyCapacity;
-        }
-
-        for (var exceptionIndex in resource.Exceptions) {
-            var exceptionDate = DateToString(new Date(resource.Exceptions[exceptionIndex]));
-            for (var dateIndex in dates) {
-                if (dates[dateIndex] === exceptionDate)
-                    capacities[dateIndex] = capacities[dateIndex] - dailyCapacity;
-            }
-        }
-    }
-
-    return capacities;
-}
-
 function GetBurndownHistory() {
-    var team = GetTeam();
-    var sprintSearch = CollateSprintText(team.Sprint, false);
-    var url = settings.DevStatsBurndownApi + "?sprint=" + encodeURI(sprintSearch);
+    var url = apiRoot + "burndown?sprint=" + encodeURI(settings.Name);
 
     $.ajax({
         url: url,
@@ -108,27 +71,18 @@ function GetBurndownHistory() {
 }
 
 function CalculateBurndown() {
-    var team = GetTeam();
     var dates = GetDateArray();
-    var dailyCapacities = GetDailyCapacities(team, dates);
+    var idealTrend = GetIdealTrend(dates);
     var today = GetToday();
     var latestRemainingCapacity = 0;
 
     if (burndownHistory.Days.length > 0)
         latestRemainingCapacity = burndownHistory.Days[burndownHistory.Days.length - 1].WorkRemaining;
 
-    var remainingCapacities = [];
     var remainingWork = [];
-    
+
     for (var dateIndex in dates) {
-        remainingCapacities.push(0);
         remainingWork.push(latestRemainingCapacity);
-
-        for (var capacityIndex in dailyCapacities) {
-            if (parseInt(capacityIndex) <= parseInt(dateIndex)) continue;
-
-            remainingCapacities[dateIndex] += dailyCapacities[capacityIndex];
-        }
 
         for (var burndownDayIndex in burndownHistory.Days) {
             var burndownDay = burndownHistory.Days[burndownDayIndex];
@@ -138,7 +92,7 @@ function CalculateBurndown() {
         }
     }
 
-    DrawChart(team, dates, remainingCapacities, remainingWork);
+    DrawChart(dates, idealTrend, remainingWork);
 }
 
 function GetToday() {
@@ -150,14 +104,27 @@ function GetToday() {
     return new Date(year, month, day, 0, 0, 0, 0);
 }
 
-function DrawChart(team, dates, capacity, workRemaining) {
+function GetIdealTrend(dates) {
+    var idealTrend = [];
+    var numberOfDays = parseInt(settings.DurationDays);
+    var effort = parseInt(settings.PlannedEffort);
+
+    for (var dateIndex in dates) {
+        var targetForDay = (effort / numberOfDays) * (numberOfDays - dateIndex - 1);
+        idealTrend.push(targetForDay);
+    }
+
+    return idealTrend;
+}
+
+function DrawChart(dates, idealTrend, workRemaining) {
     CreateChartContainer();
 
     var today = DateToString(GetToday());
     var fromLoc = 0;
     var toLoc = 0.5;
     var foundDatePosition = false;
-    var title = CollateSprintText(team.Sprint, false);
+    var title = settings.Pod + " - " + settings.Name;
     var lineWidth = 2;
 
     var urlLineWidth = getURLParameter("LineWidth");
@@ -206,8 +173,8 @@ function DrawChart(team, dates, capacity, workRemaining) {
             }]
         },
         series: [{
-            name: 'Capacity Remaining (End of Day)',
-            data: capacity,
+            name: 'Ideal Work Remaining (End of Day)',
+            data: idealTrend,
             lineWidth: lineWidth,
             lineColor: '#3333ff',
             marker: {
@@ -242,15 +209,91 @@ function CreateChartContainer() {
     $("body").append(markUp);
 }
 
-function CollateSprintText(sprints, includeBrackets) {
-    var collatedSprints = "";
-    var leftBrace = includeBrackets ? "{" : "";
-    var rightBrace = includeBrackets ? "}" : "";
+function GetWorkRemainingData() {
+    DisplayMessage("Polling YouTrack for work remaining data");
 
-    for (var sprintIndex in sprints) {
-        collatedSprints += (sprintIndex > 0) ? ", " : "";
-        collatedSprints += leftBrace + sprints[sprintIndex] + rightBrace;
+    var dataUrl = "Sprint: {" + settings.Name + "} ";
+    dataUrl += "State: {Submitted}, {Designing}, {Ready to Start}, {In Progress} ";
+    dataUrl += "Type: {Task}, {Testing Task}, {Rework Task}, {Product Owner Review} ";
+    dataUrl += " order by: {issue id} desc";
+
+    dataUrl = youTrackRoot + "/rest/issue?filter=" + encodeURI(dataUrl) + "&max=500";
+
+    $.ajax({
+        url: dataUrl,
+        dataType: "json",
+        headers: {
+            accept: 'application/json'
+        },
+        success: function (jsonData) {
+            AnalyzeWorkRemainingData(jsonData);
+        },
+        error: function () {
+            GetBurndownHistory();
+        }
+    });
+}
+
+function AnalyzeWorkRemainingData(youTrackData) {
+    DisplayMessage("Analyzing Work Remaining Data...");
+    var workRemaining = 0;
+
+    for (var taskIndex in youTrackData.issue) {
+        var task = youTrackData.issue[taskIndex];
+        var type = "Unknown";
+        var state = "Unknown";
+        var sprint = "Unknown";
+        var estimate = 0;
+        var workRemainingForTask = 0;
+
+        for (var fieldIndex in task.field) {
+            var field = task.field[fieldIndex];
+
+            if (field.name === "State") state = field.value[0];
+            if (field.name === "Estimate") estimate = parseInt(field.value[0]);
+            if (field.name === "WorkRemaining") workRemainingForTask = parseInt(field.value[0]);
+            if (field.name === "Sprint") sprint = field.value[0];
+        }
+
+        if (state !== "In Progress" && estimate >= 0 && workRemainingForTask === 0)
+            workRemainingForTask = estimate;
+
+        workRemaining += workRemainingForTask;
     }
 
-    return collatedSprints;
+    PostWorkRemainingForSprint(workRemaining);
+}
+
+function PostWorkRemainingForSprint(workRemaining) {
+    var today = new Date();
+    var year = today.getFullYear();
+    var month = today.getMonth() + 1;
+    var day = today.getDate();
+
+    if (month < 10) month = "0" + month;
+    if (day < 10) day = "0" + day;
+
+    var dataPackage = '{"Sprint":"' + settings.Name + '","Date":"' + year + '-' + month + '-' + day + 'T00:00:00.000Z","WorkRemaining":' + workRemaining + '}';
+
+    var postUrl = apiRoot + "/burndown";
+
+    $.ajax({
+        type: "POST",
+        url: postUrl,
+        data: dataPackage,
+        contentType: "application/json; charset=utf-8",
+        dataType: "json",
+        success: function (jsonData) {
+            GetBurndownHistory();
+        },
+        error: function (jsonData) {
+            GetBurndownHistory();
+        }
+    });
+}
+
+function DisplayMessage(messageText) {
+    var markUp = "<div class='message-banner'>" + messageText + "</div>";
+    $("body").empty();
+    $("body").append(markUp);
 }

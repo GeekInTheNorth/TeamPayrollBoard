@@ -55,7 +55,19 @@ function DateToString(theDate) {
 }
 
 function getURLParameter(name) {
-    return decodeURIComponent((new RegExp('[?|&]' + name + '=' + '([^&;]+?)(&|#|;|$)').exec(location.search) || [, ""])[1].replace(/\+/g, '%20')) || null
+    return getURLParameter(name, false);
+}
+
+function getURLParameter(name, caseInsensitive) {
+    var paramName = name;
+    var locationName = location.search;
+
+    if (caseInsensitive) {
+        paramName = paramName.toLowerCase();
+        locationName = locationName.toLowerCase();
+    }
+
+    return decodeURIComponent((new RegExp('[?|&]' + paramName + '=' + '([^&;]+?)(&|#|;|$)').exec(locationName) || [, ""])[1].replace(/\+/g, '%20')) || null
 }
 
 function RefreshData() {
