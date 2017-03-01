@@ -214,7 +214,7 @@ function GetWorkRemainingData() {
 
     var dataUrl = "Sprint: {" + settings.Name + "} ";
     dataUrl += "State: {Submitted}, {Designing}, {Ready to Start}, {In Progress} ";
-    dataUrl += "Type: {Task}, {Testing Task}, {Rework Task}, {Product Owner Review} ";
+    dataUrl += "Type: {Task}, {Testing Task}, {Rework Task}, {Product Owner Review}, {Merge}, {AC Rework Task} ";
     dataUrl += " order by: {issue id} desc";
 
     dataUrl = youTrackRoot + "/rest/issue?filter=" + encodeURI(dataUrl) + "&max=500";
@@ -255,7 +255,7 @@ function AnalyzeWorkRemainingData(youTrackData) {
             if (field.name === "Sprint") sprint = field.value[0];
         }
 
-        if (state !== "In Progress" && estimate >= 0 && workRemainingForTask === 0)
+        if (estimate >= 0 && workRemainingForTask === 0)
             workRemainingForTask = estimate;
 
         workRemaining += workRemainingForTask;
