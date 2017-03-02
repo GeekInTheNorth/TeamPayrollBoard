@@ -124,7 +124,7 @@ function DrawChart(dates, idealTrend, workRemaining) {
     var fromLoc = 0;
     var toLoc = 0.5;
     var foundDatePosition = false;
-    var title = settings.Pod + " - " + settings.Name;
+    var title = settings.Name;
     var lineWidth = 2;
 
     var urlLineWidth = getURLParameter("LineWidth");
@@ -150,7 +150,8 @@ function DrawChart(dates, idealTrend, workRemaining) {
             x: -20, //center,
             style: {
                 fontWeight: 'bold',
-                fontSize: '30px'
+                fontSize: '30px',
+                cursor: 'pointer'
             },
         },
         xAxis: {
@@ -194,6 +195,10 @@ function DrawChart(dates, idealTrend, workRemaining) {
             }
         }]
     });
+
+    $("tspan").click(function () {
+        GotoYouTrack();
+    });
 }
 
 function CreateChartContainer() {
@@ -212,12 +217,7 @@ function CreateChartContainer() {
 function GetWorkRemainingData() {
     DisplayMessage("Polling YouTrack for work remaining data");
 
-    var dataUrl = "Sprint: {" + settings.Name + "} ";
-    dataUrl += "State: {Submitted}, {Designing}, {Ready to Start}, {In Progress} ";
-    dataUrl += "Type: {Task}, {Testing Task}, {Rework Task}, {Product Owner Review}, {Merge}, {AC Rework Task} ";
-    dataUrl += " order by: {issue id} desc";
-
-    dataUrl = youTrackRoot + "/rest/issue?filter=" + encodeURI(dataUrl) + "&max=500";
+    var dataUrl = youTrackRoot + "/rest/issue?filter=" + encodeURI(GetYouTrackFilter()) + "&max=500";
 
     $.ajax({
         url: dataUrl,
@@ -296,4 +296,20 @@ function DisplayMessage(messageText) {
     var markUp = "<div class='message-banner'>" + messageText + "</div>";
     $("body").empty();
     $("body").append(markUp);
+}
+
+function GetYouTrackFilter()
+{
+    var filter = "Sprint: {" + settings.Name + "} ";
+    filter += "State: {Submitted}, {Designing}, {Ready to Start}, {In Progress} ";
+    filter += "Type: {Task}, {Testing Task}, {Rework Task}, {Product Owner Review}, {Merge}, {AC Rework Task} ";
+    filter += " order by: {issue id} desc";
+
+    return filter;
+}
+
+function GotoYouTrack() {
+    var url = youTrackRoot + '/issues?q=' + encodeURI(GetYouTrackFilter());
+
+    window.location.href = url;
 }
